@@ -1,0 +1,33 @@
+spring:
+  config:
+    import: secrets.properties
+  main:
+    web-application-type: reactive
+  application:
+    name: api-gateway
+
+  webclient:
+    base-url: http://USER-MANAGEMENT-SERVICE
+
+  pulsar:
+    client:
+      service-url: pulsar://localhost:6650
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: false
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user/**
+
+server:
+  port: 8083
+rsa:
+  public-key: classpath:keys/publicKey.pem
+  private-key: classpath:keys/privateKey.pem
+jwt:
+  secret: ${JWT_SECRET}
