@@ -9,9 +9,14 @@ import dev.gagnon.exception.BdicBaseException;
 import dev.gagnon.exception.EmailExistsException;
 import dev.gagnon.service.UserService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @AllArgsConstructor
@@ -32,6 +37,8 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         mapRoleToUser(signUpRequest, user);
+        user.setRoles(new HashSet<>(Set.of(signUpRequest.getRole())));
+        userRepository.save(user);
         UserCreateResponse userCreateResponse = modelMapper.map(user, UserCreateResponse.class);
         eventPublisher.sendCreateMessage(userCreateResponse);
         return modelMapper.map(user, SignUpResponse.class);
@@ -66,6 +73,7 @@ public class UserServiceImpl implements UserService {
                 riderRepository.save(rider);
             }
         }
+
     }
 
     private void validate(SignUpRequest signUpRequest) {

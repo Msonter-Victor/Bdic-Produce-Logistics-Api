@@ -3,6 +3,7 @@ package dev.gagnon.security.filter;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import dev.gagnon.dto.request.LoginRequest;
 import dev.gagnon.dto.response.BdicApiResponse;
 import dev.gagnon.dto.response.ErrorResponse;

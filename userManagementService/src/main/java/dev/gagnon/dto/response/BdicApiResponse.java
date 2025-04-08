@@ -4,10 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+@AllArgsConstructor
 @Getter
 @Setter
-@AllArgsConstructor
-public class BdicApiResponse<T>{
-    private boolean  isSuccessful;
-    private T  data;
+public class BdicApiResponse <T>{
+    private boolean isSuccessful;
+    private T data;
 }

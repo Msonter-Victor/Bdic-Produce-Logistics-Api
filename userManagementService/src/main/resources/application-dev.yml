@@ -1,6 +1,6 @@
 spring:
   application:
-    name: user-service
+    name: USER-SERVICE
   config:
     import: secrets.properties
   servlet:
@@ -32,7 +32,13 @@ spring:
       mail.smtp.starttls.required: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED}
       mail.smtp.starttls.enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE}
 
-
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone : http://localhost:8761/eureka/
 
 
 

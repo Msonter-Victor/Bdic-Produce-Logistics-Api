@@ -12,7 +12,6 @@ import static java.time.temporal.ChronoUnit.HOURS;
 @Service
 @Slf4j
 public class AuthServiceImpl implements AuthService{
-
     private final BlackTokenRepository blacklistedTokenRepository;
 
 
