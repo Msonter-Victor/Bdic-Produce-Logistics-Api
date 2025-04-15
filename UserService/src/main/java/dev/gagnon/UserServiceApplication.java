@@ -1,12 +1,16 @@
 package dev.gagnon;
 
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+//public class UserServiceApplication {
+//}
 
 @SpringBootApplication
 @EnableDiscoveryClient
 public class UserServiceApplication {
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
+        SpringApplication.run(UserServiceApplication.class, args);
     }
 }
