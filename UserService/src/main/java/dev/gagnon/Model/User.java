@@ -39,8 +39,8 @@ public class User {
 
     private String passportUrl;
 
-    //    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "role_id", nullable = false)
+    //@ManyToOne(fetch = FetchType.LAZY)
+//@JoinColumn(name = "role_id", nullable = false)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",

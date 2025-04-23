@@ -3,6 +3,7 @@ package dev.gagnon.Controller;
 import dev.gagnon.DTO.AuthRequest;
 import dev.gagnon.DTO.AuthResponse;
 import dev.gagnon.Service.JwtService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -43,5 +47,17 @@ public class AuthController {
             return ResponseEntity.status(401).body("Invalid email or password");
         }
     }
+
+    @GetMapping("/verify")
+    public void verifyUser(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
+        try {
+            userService.verifyUser(token);
+            response.sendRedirect("https://marketplace.bdic.ng/register/getStarted"); // ✅ success
+        } catch (RuntimeException ex) {
+            String errorMessage = URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8);
+            response.sendRedirect("https://marketplace.bdic.ng/verification-error?error=" + errorMessage);
+        }
+    }
+
 }
 
