@@ -10,5 +10,11 @@ public interface UserService {
     void resendVerificationEmail(String email);
 
     // 🔥 Add this new method
-    String extractEmailFromToken(String token);
+   // String extractEmailFromToken(String token);
+    public String extractEmailFromToken(String token) {
+        return userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid or unknown token"))
+                .getEmail();
+    }
+
 }

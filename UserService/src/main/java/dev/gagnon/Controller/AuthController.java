@@ -48,16 +48,7 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/verify")
-    public void verifyUser(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
-        try {
-            userService.verifyUser(token);
-            response.sendRedirect("https://marketplace.bdic.ng/register/getStarted"); // ✅ success
-        } catch (RuntimeException ex) {
-            String errorMessage = URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8);
-            response.sendRedirect("https://marketplace.bdic.ng/verification-error?error=" + errorMessage);
-        }
-    }
+
 
 }
 

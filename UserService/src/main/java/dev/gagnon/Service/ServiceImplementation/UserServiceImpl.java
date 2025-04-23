@@ -3,14 +3,31 @@ package dev.gagnon.Service.ServiceImplementation;
 import dev.gagnon.DTO.UserRegistrationRequest;
 import dev.gagnon.Model.Role;
 import dev.gagnon.Model.User;
+import dev.gagnon.Repository.RoleRepository;
+import dev.gagnon.Repository.UserRepository;
+import dev.gagnon.Service.EmailService;
+import dev.gagnon.Service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-public class UserServiceImpl {
+@Service
+public class UserServiceImpl implements UserService {
 
+    private final UserRepository userRepository;
+
+    private final EmailService emailService;
+
+    private final PasswordEncoder passwordEncoder;
+
+
+    private final RoleRepository roleRepository;
+
+    //--------------------------------------------------------------------------------------------
     @Override
     public User registerUser(UserRegistrationRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -48,7 +65,7 @@ public class UserServiceImpl {
 
         return savedUser;
     }
-
+//---------------------------------------------------------------------------------------------
     @Override
     public boolean verifyUser(String token) {
         Optional<User> userOpt = userRepository.findByVerificationToken(token);
@@ -75,5 +92,46 @@ public class UserServiceImpl {
 
         return true;
     }
+
+    //-------------------------------------------------------------------------------------------
+    @Override
+    public void resendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        if (user.isVerified()) {
+            throw new RuntimeException("This account has already been verified.");
+        }
+        // Check if token is missing, invalid or expired
+        boolean shouldResend = false;
+
+        if (user.getVerificationToken() == null || user.getTokenExpiration() == null) {
+            shouldResend = true;
+        } else if (user.getTokenExpiration().isBefore(LocalDateTime.now())) {
+            shouldResend = true;
+        }
+
+        if (!shouldResend) {
+            throw new RuntimeException("A valid verification token already exists. Please check your email.");
+        }
+        // Generate new token
+        user.setVerificationToken(UUID.randomUUID().toString());
+        user.setTokenExpiration(LocalDateTime.now().plusMinutes(15));
+        userRepository.save(user);
+
+        String verificationLink = "http://localhost:8982/api/users/verify?token=" + user.getVerificationToken();
+        emailService.sendVerificationEmail(
+                user.getEmail(),
+                "Verify Your Account",
+                "<p>Click the link to verify your account: <a href=\"" + verificationLink + "\">Verify</a></p>"
+        );
+    }
+    //----------------------------------------------------------------------------------------
+    public String extractEmailFromToken(String token) {
+        return userRepository.findByVerificationToken(token)
+                .map(User::getEmail)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+    }
+
 
 }
