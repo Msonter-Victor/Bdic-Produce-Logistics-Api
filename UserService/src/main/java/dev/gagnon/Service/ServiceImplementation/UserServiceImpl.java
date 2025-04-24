@@ -7,6 +7,8 @@ import dev.gagnon.Repository.RoleRepository;
 import dev.gagnon.Repository.UserRepository;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,22 +18,22 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+private final UserRepository userRepository;
 
-    private final EmailService emailService;
+private final EmailService emailService;
 
-    private final PasswordEncoder passwordEncoder;
+private final PasswordEncoder passwordEncoder;
 
-
-    private final RoleRepository roleRepository;
+private final RoleRepository roleRepository;
 
     //--------------------------------------------------------------------------------------------
     @Override
-    public User registerUser(UserRegistrationRequest request) {
+    public ResponseEntity<?> registerUser(UserRegistrationRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use.");
+            return ResponseEntity.badRequest().body("Email already in use.");
         }
 
         User.UserBuilder userBuilder = User.builder()
@@ -46,7 +48,6 @@ public class UserServiceImpl implements UserService {
                 .tokenExpiration(LocalDateTime.now().plusMinutes(15))
                 .isVerified(false);
 
-        // Set default role (ID=1) if exists
         Role defaultRole = roleRepository.findById(1L).orElse(null);
         if (defaultRole != null) {
             userBuilder.roles(Set.of(defaultRole));
@@ -55,7 +56,6 @@ public class UserServiceImpl implements UserService {
         User user = userBuilder.build();
         User savedUser = userRepository.save(user);
 
-        // Send email with verification link
         String verificationLink = "http://localhost:8982/api/users/verify?token=" + savedUser.getVerificationToken();
         emailService.sendVerificationEmail(
                 savedUser.getEmail(),
@@ -63,9 +63,10 @@ public class UserServiceImpl implements UserService {
                 "<p>Click the link to verify your account: <a href=\"" + verificationLink + "\">Verify</a></p>"
         );
 
-        return savedUser;
+        return ResponseEntity.ok("User registered successfully. Please check your email for verification.");
     }
-//---------------------------------------------------------------------------------------------
+
+    //---------------------------------------------------------------------------------------------
     @Override
     public boolean verifyUser(String token) {
         Optional<User> userOpt = userRepository.findByVerificationToken(token);

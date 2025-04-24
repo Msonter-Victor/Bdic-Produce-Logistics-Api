@@ -2,6 +2,8 @@ package dev.gagnon.Service;
 
 import org.springframework.http.ResponseEntity;
 import dev.gagnon.DTO.UserRegistrationRequest;
+import org.springframework.stereotype.Service;
+
 
 public interface UserService {
     boolean verifyUser(String token);
@@ -10,11 +12,7 @@ public interface UserService {
     void resendVerificationEmail(String email);
 
     // 🔥 Add this new method
-   // String extractEmailFromToken(String token);
-    public String extractEmailFromToken(String token) {
-        return userRepository.findByVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid or unknown token"))
-                .getEmail();
-    }
+   String extractEmailFromToken(String token);
+
 
 }
