@@ -28,7 +28,7 @@ public class RoleController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
+    @PostMapping("/AddRoles")
     public Role createRole(@RequestBody Role role) {
         return roleService.createRole(role);
     }

@@ -63,7 +63,8 @@ private final RoleRepository roleRepository;
                 "<p>Click the link to verify your account: <a href=\"" + verificationLink + "\">Verify</a></p>"
         );
 
-        return ResponseEntity.ok("User registered successfully. Please check your email for verification.");
+       return ResponseEntity.ok("User registered successfully. Please check your email for verification.");
+        //return savedUser;
     }
 
     //---------------------------------------------------------------------------------------------

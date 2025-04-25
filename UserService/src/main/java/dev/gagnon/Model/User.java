@@ -1,5 +1,4 @@
 package dev.gagnon.Model;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
 
 @Entity
 @Table(name = "users")
@@ -39,8 +37,6 @@ public class User {
 
     private String passportUrl;
 
-    //@ManyToOne(fetch = FetchType.LAZY)
-//@JoinColumn(name = "role_id", nullable = false)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -48,16 +44,12 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
-
     @Column(nullable = false)
     private String password;
-
     @Column(name = "is_verified", nullable = false)
     private boolean isVerified = false;
-
     @Column(name = "verification_token", unique = true)
     private String verificationToken;
-
     @Column(name = "token_expiration")
     private LocalDateTime tokenExpiration;
 

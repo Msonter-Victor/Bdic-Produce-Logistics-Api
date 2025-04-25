@@ -1,15 +1,18 @@
 package dev.gagnon.Controller;
-
-import dev.gagnon.Model.User;
+import dev.gagnon.DTO.UserRegistrationRequest;
+import dev.gagnon.Service.FileService;
 import dev.gagnon.Service.UserService;
 import dev.gagnon.Util.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -23,7 +26,29 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    @Autowired
+    private FileService fileService;
+//--------------------------------------------------------------------------------------------------
+@PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<?> register(
+        @ModelAttribute UserRegistrationRequest request,
+        @RequestPart(required = false) MultipartFile passport
+) {
+    // Optionally handle the file if present
+    String passportUrl = null;
+    if (passport != null && !passport.isEmpty()) {
+        // save the file or get its URL
+        passportUrl = fileService.save(passport); // hypothetical service
+    }
+    // inject the file URL into the request object
+    request.setPassportUrl(passportUrl);
+//    User newUser = userService.registerUser(request);
+//    return ResponseEntity.ok(newUser);
+    return userService.registerUser(request);
+}
 
+
+//--------------------------------------------------------------------------------------------------
     @GetMapping("/verify")
     public void verifyUser(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
         try {

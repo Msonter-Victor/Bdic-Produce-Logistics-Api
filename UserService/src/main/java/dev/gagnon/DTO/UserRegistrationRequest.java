@@ -1,7 +1,5 @@
 package dev.gagnon.DTO;
 
-//public class UserRegistrationRequest {
-//}
 import lombok.Data;
 @Data
 public class UserRegistrationRequest {
