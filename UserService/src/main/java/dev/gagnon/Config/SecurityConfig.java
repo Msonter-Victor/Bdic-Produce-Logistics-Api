@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/test-email").permitAll()
                         .requestMatchers("/api/users/verify").permitAll()
+//                        .requestMatchers("api/users/dashboard-redirect").permitAll()
+                       .requestMatchers("/dashboard-redirect").authenticated()
                        //.requestMatchers("/api/roles/**").hasAuthority("ADMIN") // protect the rest
                         //.requestMatchers(HttpMethod.GET, "/api/roles").permitAll()
 
