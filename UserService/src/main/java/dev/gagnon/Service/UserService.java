@@ -11,7 +11,6 @@ public interface UserService {
 
     void resendVerificationEmail(String email);
 
-    // 🔥 Add this new method
    String extractEmailFromToken(String token);
 
 

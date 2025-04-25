@@ -49,17 +49,17 @@ public ResponseEntity<?> register(
 
 
 //--------------------------------------------------------------------------------------------------
-    @GetMapping("/verify")
-    public void verifyUser(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
-        try {
-            userService.verifyUser(token);
-            response.sendRedirect("https://marketplace.bdic.ng/register/getStarted"); // ✅ success
-        } catch (RuntimeException ex) {
-            String errorMessage = URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8);
-            response.sendRedirect("https://marketplace.bdic.ng/verification-error?error=" + errorMessage);
-        }
-    }
-
+//    @GetMapping("/verify")
+//    public void verifyUser(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
+//        try {
+//            userService.verifyUser(token);
+//            response.sendRedirect("https://marketplace.bdic.ng/register/getStarted"); // ✅ success
+//        } catch (RuntimeException ex) {
+//            String errorMessage = URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8);
+//            response.sendRedirect("https://marketplace.bdic.ng/verification-error?error=" + errorMessage);
+//        }
+//    }
+//--------------------------------------------------------------------------------------------------------------
     @PostMapping("/resend-verification")
     public ResponseEntity<String> resendEmail(@RequestParam String email) {
         try {
@@ -69,6 +69,46 @@ public ResponseEntity<?> register(
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
+//-------------------------------------------------------------------------------------------------------
+@GetMapping("/verify")
+public ResponseEntity<?> verifyUser(@RequestParam("token") String token) {
+    try {
+        // ✅ Attempt verification
+        userService.verifyUser(token);
+
+        // Success - inform frontend to redirect to login
+        return ResponseEntity.ok(Map.of(
+                "message", "Verification successful. Redirecting to login...",
+                "redirectUrl", "https://marketplace.bdic.ng/register/getStarted"
+        ));
+
+    } catch (RuntimeException ex) {
+        String errorMessage = ex.getMessage();
+
+        if (errorMessage.contains("expired")) {
+            try {
+                String email = userService.extractEmailFromToken(token);
+                userService.resendVerificationEmail(email);
+
+                return ResponseEntity.status(HttpStatus.GONE).body(Map.of(
+                        "error", "Verification token expired. A new verification email has been sent to " + email
+                ));
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                        "error", "Token expired and resend failed: " + errorMessage
+                ));
+            }
+        }
+
+        // Any other error (e.g., token invalid or tampered)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", "Verification failed: " + errorMessage
+        ));
+    }
+}
+
+
+
 //------------------------------------------------------------------------------------------
 @GetMapping("/dashboard-redirect")
 public ResponseEntity<?> getAccessibleDashboards(@AuthenticationPrincipal CustomUserDetails userDetails) {

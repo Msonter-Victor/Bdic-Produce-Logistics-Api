@@ -4,6 +4,7 @@ import dev.gagnon.DTO.AuthRequest;
 import dev.gagnon.DTO.AuthResponse;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.JwtService;
+import dev.gagnon.Util.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,15 +36,20 @@ public class AuthController {
                             authRequest.getPassword()
                     )
             );
-            UserDetails user = (UserDetails) authentication.getPrincipal();
-            List<String> roles = user.getAuthorities().stream()
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+            List<String> roles = userDetails.getAuthorities().stream()
                     .map(auth -> auth.getAuthority())
                     .toList();
 
-            String token = jwtService.generateToken(user, roles);
+            String token = jwtService.generateToken(userDetails, roles);
+
             return ResponseEntity.ok(new AuthResponse(token, roles));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body("Invalid email or password");
+        } catch (DisabledException e) {
+            return ResponseEntity.status(403).body("Account not verified, Check your email to verify");
         }
     }
 
