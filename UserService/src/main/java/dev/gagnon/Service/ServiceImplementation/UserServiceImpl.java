@@ -57,14 +57,21 @@ private final RoleRepository roleRepository;
         User savedUser = userRepository.save(user);
 
         String verificationLink = "http://localhost:8982/api/users/verify?token=" + savedUser.getVerificationToken();
-        emailService.sendVerificationEmail(
-                savedUser.getEmail(),
-                "Verify Your Account",
-                "<p>Click the link to verify your account: <a href=\"" + verificationLink + "\">Verify</a></p>"
-        );
+        String emailMessage;
+        try {
+            emailService.sendVerificationEmail(
+                    savedUser.getEmail(),
+                    "Verify Your Account",
+                    "<p>Click the link to verify your account: <a href=\"" + verificationLink + "\">Verify</a></p>"
+            );
+            emailMessage = "Please check your email for verification.";
+        } catch (Exception e) {
+            // Log the exception for monitoring
+            System.err.println("Email failed: " + e.getMessage());
+            emailMessage = "User registered successfully, but verification email could not be sent. Please try resending later.";
+        }
 
-       return ResponseEntity.ok("User registered successfully. Please check your email for verification.");
-        //return savedUser;
+        return ResponseEntity.ok("User registered successfully. " + emailMessage);
     }
 
     //---------------------------------------------------------------------------------------------

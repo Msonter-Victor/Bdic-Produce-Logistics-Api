@@ -53,6 +53,10 @@ public class User {
     @Column(name = "token_expiration")
     private LocalDateTime tokenExpiration;
 
+    @Column(name = "last_verification_sent_at")
+    private LocalDateTime lastVerificationSentAt;
+
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

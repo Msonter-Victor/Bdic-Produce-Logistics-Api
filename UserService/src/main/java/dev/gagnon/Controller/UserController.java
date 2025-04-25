@@ -1,5 +1,8 @@
 package dev.gagnon.Controller;
 import dev.gagnon.DTO.UserRegistrationRequest;
+import dev.gagnon.Model.User;
+import dev.gagnon.Repository.UserRepository;
+import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.FileService;
 import dev.gagnon.Service.UserService;
 import dev.gagnon.Util.CustomUserDetails;
@@ -12,9 +15,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,6 +27,10 @@ public class UserController {
     private final UserService userService;
     @Autowired
     private FileService fileService;
+
+    private final UserRepository userRepository;
+
+    private final EmailService emailService;
 //--------------------------------------------------------------------------------------------------
 @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public ResponseEntity<?> register(
@@ -43,16 +51,52 @@ public ResponseEntity<?> register(
 }
 
 //--------------------------------------------------------------------------------------------------------------
-    @PostMapping("/resend-verification")
-    public ResponseEntity<String> resendEmail(@RequestParam String email) {
-        try {
-            userService.resendVerificationEmail(email);
-            return ResponseEntity.ok("Verification email resent.");
-        } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
-        }
+@PostMapping("/resend-verification")
+public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> request) {
+    String email = request.get("email");
+    Optional<User> optionalUser = userRepository.findByEmail(email);
+
+    if (optionalUser.isEmpty()) {
+        return ResponseEntity.badRequest().body("User with this email does not exist.");
     }
-//-------------------------------------------------------------------------------------------------------
+
+    User user = optionalUser.get();
+
+    if (user.isVerified()) {
+        return ResponseEntity.badRequest().body("Account already verified.");
+    }
+
+    // Check rate limit
+    LocalDateTime now = LocalDateTime.now();
+    if (user.getLastVerificationSentAt() != null &&
+            Duration.between(user.getLastVerificationSentAt(), now).toSeconds() < 60) {
+        long secondsLeft = 60 - Duration.between(user.getLastVerificationSentAt(), now).toSeconds();
+        return ResponseEntity.status(429)
+                .body("Please wait " + secondsLeft + " seconds before requesting another email.");
+    }
+
+    // Generate new token and expiration
+    String newToken = UUID.randomUUID().toString();
+    user.setVerificationToken(newToken);
+    user.setTokenExpiration(now.plusMinutes(15));
+    user.setLastVerificationSentAt(now);
+    userRepository.save(user);
+
+    String verificationLink = "http://localhost:8982/api/users/verify?token=" + newToken;
+
+    try {
+        emailService.sendVerificationEmail(
+                user.getEmail(),
+                "Verify Your Account",
+                "<p>Click the link to verify your account: <a href=\"" + verificationLink + "\">Verify</a></p>"
+        );
+        return ResponseEntity.ok("Verification email has been resent.");
+    } catch (Exception e) {
+        return ResponseEntity.status(500).body("Failed to resend verification email. Please try again later.");
+    }
+}
+
+    //-------------------------------------------------------------------------------------------------------
 @GetMapping("/verify")
 public ResponseEntity<?> verifyUser(@RequestParam("token") String token) {
     try {
