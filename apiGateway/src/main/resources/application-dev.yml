@@ -5,7 +5,7 @@ server:
 #  public-key: classpath:keys/publicKey.pem
 #  private-key: classpath:keys/privateKey.pem
 jwt:
-  secret: ${JWT_SECRET}
+#  secret: ${JWT_SECRET}
 
 spring:
   config:
@@ -17,6 +17,7 @@ spring:
           uri: lb://USER-SERVICE
           predicates:
             - Path=/api/users/**
+            - Path=/api/users/register
             - Path=/api/auth/**
           filters:
             - AuthenticationFilter

@@ -1,0 +1,92 @@
+server:
+  port: 8081  # Gateway's port
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # Enable discovery-based routing
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+
+        - id: user-auth-login
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/login
+
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth2/**
+
+        - id: dashboard
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/dashboard-redirect
+
+        - id: user-service-register
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/register
+
+        - id: user-service-verify
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/verify
+
+        - id: user-service-test-email
+          uri: lb://USER-SERVICE
+          predicates:
+           - Path=/api/auth/test-email
+
+        - id: user-service-auth-wildcard
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-service-add-roles
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/roles/AddRoles
+
+              # Authenticated Route
+        - id: dashboard
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=api/users/dashboard-redirect
+
+              # Role-based Routes
+        - id: admin-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/admin/**
+
+        - id: vendor-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/vendor/**
+
+        - id: logistics-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/logistics/**
+
+        - id: buyer-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/buyer/**
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
