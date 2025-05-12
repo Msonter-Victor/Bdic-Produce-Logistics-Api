@@ -36,15 +36,17 @@ public class SecurityConfig {
                       //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
                         .requestMatchers("/api/auth/**").permitAll()   // login/signup public
                         .requestMatchers("/api/roles/AddRoles").permitAll()     // ✅ PUBLIC getAllRoles
-                        .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/test-email").permitAll()
-                        .requestMatchers("/api/users/verify").permitAll()
-//                        .requestMatchers("api/users/dashboard-redirect").permitAll()
-                       .requestMatchers("api/users/dashboard-redirect").authenticated()
+                        .requestMatchers("/api/users/resend-verification").permitAll()
+                      .requestMatchers("/api/users/register").permitAll()
+                      .requestMatchers("/api/roles/allRoles").permitAll()
+                      .requestMatchers("/api/auth/login").permitAll()
+                      .requestMatchers("/api/auth/test-email").permitAll()
+                      .requestMatchers("/api/users/verify").permitAll()
+                      .requestMatchers("/api/auth/forgot-password").permitAll()
+                      .requestMatchers("api/users/dashboard-redirect").authenticated()
                        //.requestMatchers("/api/roles/**").hasAuthority("ADMIN") // protect the rest
-                        //.requestMatchers(HttpMethod.GET, "/api/roles").permitAll()
-
+                      .requestMatchers("/api/auth/reset-password").permitAll()
+                        .requestMatchers("api/users/add-role").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/vendor/**").hasAuthority("VENDOR")
                         .requestMatchers("/api/logistics/**").hasAuthority("LOGISTICS")

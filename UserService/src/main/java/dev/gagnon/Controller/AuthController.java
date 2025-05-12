@@ -2,8 +2,11 @@ package dev.gagnon.Controller;
 
 import dev.gagnon.DTO.AuthRequest;
 import dev.gagnon.DTO.AuthResponse;
+import dev.gagnon.DTO.ForgotPasswordRequest;
+import dev.gagnon.DTO.ResetPasswordRequest;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.JwtService;
+import dev.gagnon.Service.UserService;
 import dev.gagnon.Util.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -26,7 +29,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmailService emailService;
-
+    private final UserService userService;
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
         try {
@@ -69,5 +72,15 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        return userService.handleForgotPassword(request.getEmail());
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        userService.resetPassword(request);
+        return ResponseEntity.ok("Password has been reset successfully.");
+    }
 }
 

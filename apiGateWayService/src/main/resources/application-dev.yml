@@ -1,5 +1,6 @@
 server:
   port: 8081  # Gateway's port
+  address: 0.0.0.0
 
 spring:
   application:
@@ -50,29 +51,29 @@ spring:
         - id: user-service-auth-wildcard
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/auth/**
+            - Path=/api/auth/reset-password
 
         - id: user-service-add-roles
           uri: lb://USER-SERVICE
           predicates:
             - Path=/api/roles/AddRoles
 
-              # Authenticated Route
-        - id: dashboard
+#               Role Management Route
+        - id: dashboard-role
           uri: lb://USER-SERVICE
           predicates:
-            - Path=api/users/dashboard-redirect
+            - Path=/api/roles/allRoles
 
               # Role-based Routes
-        - id: admin-service
+        - id: forgot-service
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/admin/**
+            - Path=/api/auth/forgot-password
 
-        - id: vendor-service
+        - id: add-roleUpdate
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/vendor/**
+            - Path=/api/users/add-role
 
         - id: logistics-service
           uri: lb://USER-SERVICE
@@ -86,7 +87,14 @@ spring:
 
 eureka:
   client:
+    hostname: localhost
+    #prefer-ip-address: true
+    prefer-ip-address: false
     register-with-eureka: true
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+      #defaultZone: http://41.78.80.108:8761/eureka/
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

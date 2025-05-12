@@ -56,6 +56,11 @@ public class User {
     @Column(name = "last_verification_sent_at")
     private LocalDateTime lastVerificationSentAt;
 
+    @Column(name = "password_reset_token")
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_expiration")
+    private LocalDateTime passwordResetExpiration;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -73,6 +78,4 @@ public class User {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-
 }

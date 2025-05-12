@@ -1,6 +1,8 @@
 package dev.gagnon.Controller;
 import dev.gagnon.DTO.UserRegistrationRequest;
+import dev.gagnon.Model.Role;
 import dev.gagnon.Model.User;
+import dev.gagnon.Repository.RoleRepository;
 import dev.gagnon.Repository.UserRepository;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.FileService;
@@ -11,8 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +34,7 @@ public class UserController {
     private FileService fileService;
 
     private final UserRepository userRepository;
-
+    private final RoleRepository roleRepository;
     private final EmailService emailService;
 //--------------------------------------------------------------------------------------------------
 @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -154,5 +159,33 @@ public ResponseEntity<?> getAccessibleDashboards(@AuthenticationPrincipal Custom
             ? ResponseEntity.status(HttpStatus.FORBIDDEN).body("No accessible dashboards")
             : ResponseEntity.ok(dashboards);
 }
+//--------------------------------------------------------------------------------------------------
+
+@PostMapping("/add-role")
+public ResponseEntity<?> addRoleToAuthenticatedUser(@RequestBody Map<String, String> requestBody) {
+    String roleName = requestBody.get("name");
+
+    // Get authenticated user's email/username from SecurityContext
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String email = authentication.getName(); // assuming email is the username
+
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+    Role role = roleRepository.findByName(roleName.toUpperCase());
+    if (role == null) {
+        return ResponseEntity.badRequest().body("Role not found.");
+    }
+
+    if (user.getRoles().contains(role)) {
+        return ResponseEntity.ok("You already have the " + roleName + " role.");
+    }
+
+    user.getRoles().add(role);
+    userRepository.save(user);
+
+    return ResponseEntity.ok("Role '" + roleName + "' added successfully.");
+}
+
 
 }

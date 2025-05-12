@@ -1,5 +1,6 @@
 package dev.gagnon.Service.ServiceImplementation;
 
+import dev.gagnon.DTO.ResetPasswordRequest;
 import dev.gagnon.DTO.UserRegistrationRequest;
 import dev.gagnon.Model.Role;
 import dev.gagnon.Model.User;
@@ -141,6 +142,62 @@ private final RoleRepository roleRepository;
                 .map(User::getEmail)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
     }
+//HANDLE FORGOT PASSWORD------------------------------------------------------------------------------------------
+@Override
+public ResponseEntity<?> handleForgotPassword(String email) {
+    Optional<User> userOpt = userRepository.findByEmail(email);
+
+    if (userOpt.isEmpty()) {
+        return ResponseEntity.badRequest().body("User with this email does not exist.");
+    }
+
+    User user = userOpt.get();
+
+    if (!user.isVerified()) {
+        return ResponseEntity.badRequest().body("Account is not verified. Cannot reset password.");
+    }
+
+    // Set reset token and expiration
+    String resetToken = UUID.randomUUID().toString();
+    LocalDateTime expiration = LocalDateTime.now().plusMinutes(30);
+
+    user.setPasswordResetToken(resetToken);
+    user.setPasswordResetExpiration(expiration);
+    userRepository.save(user);
+
+    String resetLink = "http://localhost:8982/api/auth/reset-password?token=" + resetToken;
+
+    try {
+        emailService.sendVerificationEmail(
+                user.getEmail(),
+                "Reset Your Password",
+                "<p>You requested a password reset. Click the link below to reset your password:</p>" +
+                        "<a href=\"" + resetLink + "\">Reset Password</a>"
+        );
+
+        return ResponseEntity.ok("Reset link sent to your email.");
+    } catch (Exception e) {
+        System.err.println("Email sending failed: " + e.getMessage());
+        return ResponseEntity.ok("Password reset token generated, but failed to send email. Please try again.");
+    }
+}
+
+
+//RESET PASSWORD
+@Override
+public void resetPassword(ResetPasswordRequest dto) {
+    User user = userRepository.findByPasswordResetToken(dto.getToken())
+            .orElseThrow(() -> new RuntimeException("Invalid password reset token."));
+
+    if (user.getPasswordResetExpiration() == null || user.getPasswordResetExpiration().isBefore(LocalDateTime.now())) {
+        throw new RuntimeException("Token has expired.");
+    }
+
+    user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+    user.setPasswordResetToken(null);
+    user.setPasswordResetExpiration(null);
+    userRepository.save(user);
+}
 
 
 }

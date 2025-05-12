@@ -36,10 +36,10 @@ eureka:
   instance:
     #hostname: 192.168.0.146
     hostname: localhost
-    prefer-ip-address: true
+    prefer-ip-address: false
   client:
     service-url:
-      #defaultZone : http://192.168.0.146:8761/eureka/
+      #defaultZone: http://41.78.80.108:8761/eureka/
       defaultZone : http://localhost:8761/eureka/
 
 
