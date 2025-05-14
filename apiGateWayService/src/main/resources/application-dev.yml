@@ -1,0 +1,100 @@
+server:
+  port: 8081  # Gateway's port
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # Enable discovery-based routing
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+
+        - id: user-auth-login
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/login
+
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth2/**
+
+        - id: dashboard
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/dashboard-redirect
+
+        - id: user-service-register
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/register
+
+        - id: user-service-verify
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/verify
+
+        - id: user-service-test-email
+          uri: lb://USER-SERVICE
+          predicates:
+           - Path=/api/auth/test-email
+
+        - id: user-service-auth-wildcard
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/reset-password
+
+        - id: user-service-add-roles
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/roles/AddRoles
+
+#               Role Management Route
+        - id: dashboard-role
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/roles/allRoles
+
+              # Role-based Routes
+        - id: forgot-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/forgot-password
+
+        - id: add-roleUpdate
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/add-role
+
+        - id: logistics-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/logistics/**
+
+        - id: buyer-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/buyer/**
+
+eureka:
+  client:
+    hostname: localhost
+    #prefer-ip-address: true
+    prefer-ip-address: false
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+      #defaultZone: http://41.78.80.108:8761/eureka/
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

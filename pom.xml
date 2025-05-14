@@ -9,11 +9,16 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>userManagementService</module>
+
         <module>eurekaServer</module>
         <module>apiGateway</module>
         <module>payment</module>
         <module>notification</module>
+        <module>UserService</module>
+        <module>apiGateWayService</module>
+        <module>VendorService</module>
+
+
     </modules>
 
     <parent>

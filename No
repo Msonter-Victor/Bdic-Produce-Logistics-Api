@@ -1,4 +1,4 @@
-target/
+OBtarget/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -11,9 +11,7 @@ target/
 *.iws
 *.iml
 *.ipr
-*.jar
-.xml
-.proprties
+
 ### Eclipse ###
 .apt_generated
 .classpath
@@ -42,3 +40,6 @@ build/
 userManagementService/src/main/resources/secrets.properties
 notification/src/main/resources/secrets.properties
 apiGateway/src/main/resources/secrets.properties
+UserService/src/main/resources/secrets.properties
+UserService/src/main/resources/application.yml
+
