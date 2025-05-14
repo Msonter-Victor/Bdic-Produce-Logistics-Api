@@ -10,6 +10,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,7 +31,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(AbstractHttpConfigurer::disable)
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                       //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
@@ -77,27 +78,27 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        // You can load these from properties or environment for flexibility
-        config.setAllowedOrigins(List.of(
-                "http://192.168.0.146:8982",               // local dev
-                "https://marketplace.bdic.ng",              // production frontend
-                "https://staging.yourdomain.com"       // staging environment
-        ));
-
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // safer than "*"
-        config.setExposedHeaders(List.of("Authorization")); // expose token header if you're returning it
-        config.setAllowCredentials(true); // allow sending cookies or tokens
-        config.setMaxAge(3600L); // cache preflight responses for 1 hour
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return source;
-    }
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration config = new CorsConfiguration();
+//
+//        // You can load these from properties or environment for flexibility
+//        config.setAllowedOrigins(List.of(
+//                "http://192.168.0.146:8982",               // local dev
+//                "https://marketplace.bdic.ng",              // production frontend
+//                "https://staging.yourdomain.com"       // staging environment
+//        ));
+//
+//        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // safer than "*"
+//        config.setExposedHeaders(List.of("Authorization")); // expose token header if you're returning it
+//        config.setAllowCredentials(true); // allow sending cookies or tokens
+//        config.setMaxAge(3600L); // cache preflight responses for 1 hour
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", config);
+//
+//        return source;
+//    }
 
 }
