@@ -10,15 +10,14 @@ import java.util.Arrays;
 
 @Configuration
 public class SecurityConfig {
+
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList(
-                "https://marketplace.bdic.ng"
-        ));
+        config.setAllowedOrigins(Arrays.asList("https://marketplace.bdic.ng", "http://localhost:3000"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
         config.setExposedHeaders(Arrays.asList("Authorization", "Link", "X-Request-ID"));
         config.setMaxAge(3600L);
 
