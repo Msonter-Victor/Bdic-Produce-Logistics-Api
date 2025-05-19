@@ -30,6 +30,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final EmailService emailService;
     private final UserService userService;
+    
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
         try {
