@@ -2,11 +2,9 @@ package dev.gagnon.Config;
 
 import dev.gagnon.Filter.JwtAuthenticationFilter;
 import dev.gagnon.Service.CustomUserDetailsService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -20,10 +18,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
-//----------------------------------------------
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -36,32 +30,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                //.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.disable())
                 .csrf(csrf -> csrf.disable())
-                .formLogin(form -> form.disable())
                 .authorizeHttpRequests(auth -> auth
-                      //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
-                        .requestMatchers("/api/auth/**").permitAll()   // login/signup public
-                        .requestMatchers("/api/roles/AddRoles").permitAll()     // ✅ PUBLIC getAllRoles
-                        .requestMatchers("/api/users/resend-verification").permitAll()
-                      .requestMatchers("/api/users/register").permitAll()
-                      .requestMatchers("/api/roles/allRoles").permitAll()
-                      .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                       // .requestMatchers(HttpMethod.OPTIONS, "/api/auth/login").permitAll()
-                      .requestMatchers("/api/auth/login").permitAll()
-                      .requestMatchers("/api/auth/test-email").permitAll()
-                      .requestMatchers("/api/users/verify").permitAll()
-                      .requestMatchers("/api/auth/forgot-password").permitAll()
-                      .requestMatchers("api/users/dashboard-redirect").authenticated()
-                       //.requestMatchers("/api/roles/**").hasAuthority("ADMIN") // protect the rest
-                      .requestMatchers("/api/auth/reset-password").permitAll()
-                        .requestMatchers("api/users/add-role").permitAll()
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/vendor/**").hasAuthority("VENDOR")
-                        .requestMatchers("/api/logistics/**").hasAuthority("LOGISTICS")
+                        //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
+                        .requestMatchers("/api/statuses/viewAllStatus").permitAll()
+                        .requestMatchers("/api/statuses/addStatus").permitAll()
+
+                        .requestMatchers("/api/statuses/get/{id}").permitAll()
+                        .requestMatchers("/api/statuses/delete/{id}").permitAll()
+                        .requestMatchers("/api/statuses/update/{id}").permitAll()
+                        .requestMatchers("/api/markets/all").permitAll()
+                        .requestMatchers("/api/markets/add").permitAll()
+                        .requestMatchers("/api/markets/{id}").permitAll()
+                        .requestMatchers("/api/markets/delete/{id}").permitAll()
+                        .requestMatchers("/api/markets/update/{id}").permitAll()
+                        .requestMatchers("/api/market-sections/add").permitAll()
+                        .requestMatchers("/api/market-sections/all").permitAll()
+                        .requestMatchers("/api/market-sections/update/{id}").permitAll()
+                        .requestMatchers("/api/shops/add").permitAll()
+                        .requestMatchers("/api/shops/all").permitAll()
+                        .requestMatchers("/api/shops/update/{id}").permitAll()
+                        .requestMatchers("/api/states/all").permitAll()
+                        .requestMatchers("/api/local-governments/all").permitAll()
+                        .requestMatchers("/api/council-wards/all").permitAll()
+
                         .requestMatchers("/api/buyer/**").hasAuthority("BUYER")
-                        //.anyRequest().authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(daoAuthenticationProvider())
@@ -95,8 +90,7 @@ public class SecurityConfig {
 //        config.setAllowedOrigins(List.of(
 //                "http://192.168.0.146:8982",               // local dev
 //                "https://marketplace.bdic.ng",              // production frontend
-//                "https://staging.yourdomain.com",     // staging environment
-//                "http://localhost:3000"
+//                 "http://localhost:3000"
 //        ));
 //
 //        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -104,8 +98,10 @@ public class SecurityConfig {
 //        config.setExposedHeaders(List.of("Authorization")); // expose token header if you're returning it
 //        config.setAllowCredentials(true); // allow sending cookies or tokens
 //        config.setMaxAge(3600L); // cache preflight responses for 1 hour
+//
 //        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 //        source.registerCorsConfiguration("/**", config);
+//
 //        return source;
 //    }
 

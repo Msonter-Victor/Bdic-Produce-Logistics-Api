@@ -1,9 +1,6 @@
 package dev.gagnon.Controller;
 
-import dev.gagnon.DTO.AuthRequest;
-import dev.gagnon.DTO.AuthResponse;
-import dev.gagnon.DTO.ForgotPasswordRequest;
-import dev.gagnon.DTO.ResetPasswordRequest;
+import dev.gagnon.DTO.*;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.JwtService;
 import dev.gagnon.Service.UserService;
@@ -30,31 +27,64 @@ public class AuthController {
     private final JwtService jwtService;
     private final EmailService emailService;
     private final UserService userService;
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            authRequest.getEmail(),
-                            authRequest.getPassword()
-                    )
-            );
 
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+//
+//    @PostMapping("/login")
+//    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
+//        try {
+//            Authentication authentication = authenticationManager.authenticate(
+//                    new UsernamePasswordAuthenticationToken(
+//                            authRequest.getEmail(),
+//                            authRequest.getPassword()
+//                    )
+//            );
+//
+//            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+//
+//            List<String> roles = userDetails.getAuthorities().stream()
+//                    .map(auth -> auth.getAuthority())
+//                    .toList();
+//
+//            String token = jwtService.generateToken(userDetails, roles);
+//
+//            return ResponseEntity.ok(new AuthResponse(token, roles));
+//        } catch (BadCredentialsException e) {
+//            return ResponseEntity.status(401).body("Invalid email or password");
+//        } catch (DisabledException e) {
+//            return ResponseEntity.status(403).body("Account not verified, Check your email to verify");
+//        }
+//    }
+@PostMapping("/login")
+public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
+    try {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        authRequest.getEmail(),
+                        authRequest.getPassword()
+                )
+        );
 
-            List<String> roles = userDetails.getAuthorities().stream()
-                    .map(auth -> auth.getAuthority())
-                    .toList();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            String token = jwtService.generateToken(userDetails, roles);
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(auth -> auth.getAuthority())
+                .toList();
 
-            return ResponseEntity.ok(new AuthResponse(token, roles));
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body("Invalid email or password");
-        } catch (DisabledException e) {
-            return ResponseEntity.status(403).body("Account not verified, Check your email to verify");
-        }
+        String token = jwtService.generateToken(userDetails, roles);
+
+        return ResponseEntity.ok(
+                new CustomResponse<>(true, "Login successful", new AuthResponse(token, roles))
+        );
+    } catch (BadCredentialsException e) {
+        return ResponseEntity.status(401).body(
+                new CustomResponse<>(false, "Invalid email or password", null)
+        );
+    } catch (DisabledException e) {
+        return ResponseEntity.status(403).body(
+                new CustomResponse<>(false, "Account not verified. Please check your email.", null)
+        );
     }
+}
 
 
     @GetMapping("/test-email")
@@ -77,10 +107,16 @@ public class AuthController {
         return userService.handleForgotPassword(request.getEmail());
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        userService.resetPassword(request);
-        return ResponseEntity.ok("Password has been reset successfully.");
-    }
+//    @PostMapping("/reset-password")
+//    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+//        userService.resetPassword(request);
+//        return ResponseEntity.ok("Password has been reset successfully.");
+//    }
+@PostMapping("/reset-password")
+public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+    userService.resetPassword(request);
+    return ResponseEntity.ok(new CustomResponse<>(true, "Password has been reset successfully.", null));
+}
+
 }
 
