@@ -15,9 +15,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList(
-                "http://192.168.0.146:8982",               // local dev
-                "https://marketplace.bdic.ng",              // production frontend
-                "https://staging.yourdomain.com"
+                "http://localhost:3000",               // local dev
+                "https://marketplace.bdic.ng"          // production frontend
+
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(Arrays.asList("*"));
