@@ -39,19 +39,19 @@ public class UserController {
 //--------------------------------------------------------------------------------------------------
 @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public ResponseEntity<?> register(
-        @ModelAttribute UserRegistrationRequest request,
-        @RequestPart(required = false) MultipartFile passport
+        @ModelAttribute UserRegistrationRequest request
+//        @RequestPart(required = false) MultipartFile passport
 ) {
-    // Optionally handle the file if present
-    String passportUrl = null;
-    if (passport != null && !passport.isEmpty()) {
-        // save the file or get its URL
-        passportUrl = fileService.save(passport); // hypothetical service
-    }
-    // inject the file URL into the request object
-    request.setPassportUrl(passportUrl);
-//    User newUser = userService.registerUser(request);
-//    return ResponseEntity.ok(newUser);
+//    // Optionally handle the file if present
+//    String passportUrl = null;
+//    if (passport != null && !passport.isEmpty()) {
+//        // save the file or get its URL
+//        passportUrl = fileService.save(passport); // hypothetical service
+//    }
+//    // inject the file URL into the request object
+//    request.setPassportUrl(passportUrl);
+////    User newUser = userService.registerUser(request);
+////    return ResponseEntity.ok(newUser);
     return userService.registerUser(request);
 }
 
