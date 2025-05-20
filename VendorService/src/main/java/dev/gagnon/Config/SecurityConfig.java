@@ -1,0 +1,108 @@
+package dev.gagnon.Config;
+
+import dev.gagnon.Filter.JwtAuthenticationFilter;
+import dev.gagnon.Service.CustomUserDetailsService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
+
+@EnableWebSecurity
+@RequiredArgsConstructor
+@Configuration
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomUserDetailsService userDetailsService;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .cors(cors -> cors.disable())
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
+                        .requestMatchers("/api/statuses/viewAllStatus").permitAll()
+                        .requestMatchers("/api/statuses/addStatus").permitAll()
+
+                        .requestMatchers("/api/statuses/get/{id}").permitAll()
+                        .requestMatchers("/api/statuses/delete/{id}").permitAll()
+                        .requestMatchers("/api/statuses/update/{id}").permitAll()
+                        .requestMatchers("/api/markets/all").permitAll()
+                        .requestMatchers("/api/markets/add").permitAll()
+                        .requestMatchers("/api/markets/{id}").permitAll()
+                        .requestMatchers("/api/markets/delete/{id}").permitAll()
+                        .requestMatchers("/api/markets/update/{id}").permitAll()
+                        .requestMatchers("/api/market-sections/add").permitAll()
+                        .requestMatchers("/api/market-sections/all").permitAll()
+                        .requestMatchers("/api/market-sections/update/{id}").permitAll()
+                        .requestMatchers("/api/shops/add").permitAll()
+                        .requestMatchers("/api/shops/all").permitAll()
+                        .requestMatchers("/api/shops/update/{id}").permitAll()
+                        .requestMatchers("/api/states/all").permitAll()
+                        .requestMatchers("/api/local-governments/all").permitAll()
+                        .requestMatchers("/api/council-wards/all").permitAll()
+
+                        .requestMatchers("/api/buyer/**").hasAuthority("BUYER")
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(daoAuthenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration config = new CorsConfiguration();
+//
+//        // You can load these from properties or environment for flexibility
+//        config.setAllowedOrigins(List.of(
+//                "http://192.168.0.146:8982",               // local dev
+//                "https://marketplace.bdic.ng",              // production frontend
+//                 "http://localhost:3000"
+//        ));
+//
+//        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // safer than "*"
+//        config.setExposedHeaders(List.of("Authorization")); // expose token header if you're returning it
+//        config.setAllowCredentials(true); // allow sending cookies or tokens
+//        config.setMaxAge(3600L); // cache preflight responses for 1 hour
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", config);
+//
+//        return source;
+//    }
+
+}

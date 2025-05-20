@@ -2,7 +2,7 @@ eureka:
   instance:
     hostname: localhost
     #hostname: 41.78.80.108
-    prefer-ip-address: false
+    prefer-ip-address: true
     #prefer-ip-address: false
   client:
     register-with-eureka: false

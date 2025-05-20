@@ -1,4 +1,6 @@
 package dev.gagnon.Controller;
+import dev.gagnon.DTO.AuthRequest;
+import dev.gagnon.DTO.AuthResponse;
 import dev.gagnon.DTO.UserRegistrationRequest;
 import dev.gagnon.Model.Role;
 import dev.gagnon.Model.User;
@@ -6,13 +8,19 @@ import dev.gagnon.Repository.RoleRepository;
 import dev.gagnon.Repository.UserRepository;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.FileService;
+import dev.gagnon.Service.JwtService;
 import dev.gagnon.Service.UserService;
 import dev.gagnon.Util.CustomUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,12 +38,16 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+
     @Autowired
     private FileService fileService;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final EmailService emailService;
+
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 //--------------------------------------------------------------------------------------------------
 @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public ResponseEntity<?> register(
@@ -54,7 +66,6 @@ public ResponseEntity<?> register(
 ////    return ResponseEntity.ok(newUser);
     return userService.registerUser(request);
 }
-
 //--------------------------------------------------------------------------------------------------------------
 @PostMapping("/resend-verification")
 public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> request) {
@@ -159,7 +170,7 @@ public ResponseEntity<?> getAccessibleDashboards(@AuthenticationPrincipal Custom
             ? ResponseEntity.status(HttpStatus.FORBIDDEN).body("No accessible dashboards")
             : ResponseEntity.ok(dashboards);
 }
-//--------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
 
 @PostMapping("/add-role")
 public ResponseEntity<?> addRoleToAuthenticatedUser(@RequestBody Map<String, String> requestBody) {
@@ -186,6 +197,32 @@ public ResponseEntity<?> addRoleToAuthenticatedUser(@RequestBody Map<String, Str
 
     return ResponseEntity.ok("Role '" + roleName + "' added successfully.");
 }
+//---------------------------------------------------------------------LOGIN
+//@CrossOrigin(origins = "https://marketplace.bdic.ng", allowCredentials = "true")
+@PostMapping("/login")
+public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
+    try {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        authRequest.getEmail(),
+                        authRequest.getPassword()
+                )
+        );
 
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(auth -> auth.getAuthority())
+                .toList();
+
+        String token = jwtService.generateToken(userDetails, roles);
+
+        return ResponseEntity.ok(new AuthResponse(token, roles));
+    } catch (BadCredentialsException e) {
+        return ResponseEntity.status(401).body("Invalid email or password");
+    } catch (DisabledException e) {
+        return ResponseEntity.status(403).body("Account not verified, Check your email to verify");
+    }
+}
 
 }
