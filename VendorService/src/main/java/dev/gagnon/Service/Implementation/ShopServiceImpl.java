@@ -1,5 +1,6 @@
 package dev.gagnon.Service.Implementation;
 
+import com.cloudinary.Cloudinary;
 import dev.gagnon.DTO.ShopDto;
 import dev.gagnon.Exception.ResourceNotFoundException;
 import dev.gagnon.Model.*;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
+
 @Service
 @RequiredArgsConstructor
 public class ShopServiceImpl implements ShopService {
@@ -26,25 +29,14 @@ public class ShopServiceImpl implements ShopService {
     private final MarketSectionRepository marketSectionRepository;
     private final UserRepository userRepository;
     private final StatusRepository statusRepository;
+    private final Cloudinary cloudinary;
 
     @Value("${app.upload.dir:${user.dir}/uploads}") // Default to 'uploads' folder
     private String uploadDir;
 
     @Override
-    public ShopDto createShop(ShopDto dto, MultipartFile logoImage) {
-        String imagePath = null;
-
-        if (logoImage != null && !logoImage.isEmpty()) {
-            try {
-                String uniqueFilename = UUID.randomUUID() + "_" + logoImage.getOriginalFilename();
-                File destinationFile = new File(uploadDir, uniqueFilename);
-                destinationFile.getParentFile().mkdirs(); // Create folder if not exists
-                logoImage.transferTo(destinationFile);
-                imagePath = "/uploads/" + uniqueFilename; // Relative path to be saved
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to upload logo image", e);
-            }
-        }
+    public ShopDto createShop(ShopDto dto) {
+        String imagePath = getMediaUrl(dto.getMediaFile(), cloudinary.uploader());
 
         Shop shop = Shop.builder()
                 .name(dto.getName())
@@ -139,7 +131,6 @@ public class ShopServiceImpl implements ShopService {
                 .marketSectionId(shop.getMarketSection().getId())
                 .userId(shop.getUser().getId())
                 .statusId(shop.getStatus().getId())
-                .createdAt(shop.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 .build();
     }
 }

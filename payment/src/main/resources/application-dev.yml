@@ -1,6 +1,6 @@
 spring:
   application:
-    name: VENDOR-SERVICE
+    name: PAYMENT-SERVICE
   config:
     import: secrets.properties
   servlet:
@@ -40,7 +40,7 @@ eureka:
   client:
     service-url:
       #defaultZone: http://41.78.80.108:8761/eureka/
-       defaultZone : http://localhost:8761/eureka/
+      defaultZone : http://localhost:8761/eureka/
 
 
 cloud:
@@ -50,5 +50,13 @@ cloud:
     key: ${CLOUD_API_KEY}
 
 server:
-  port: 8983
+  port: 8984
   address: 0.0.0.0
+
+credo:
+  api:
+    url: ${CREDO_URL}
+    public:
+      key: ${CREDO_PUBLIC_KEY}
+    private:
+      key: ${CREDO_PRIVATE_KEY}

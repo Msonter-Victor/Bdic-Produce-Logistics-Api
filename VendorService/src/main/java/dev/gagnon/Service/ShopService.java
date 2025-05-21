@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ShopService {
    // ShopDto createShop(ShopDto dto);
-    ShopDto createShop(ShopDto dto, MultipartFile logoImage);
+    ShopDto createShop(ShopDto dto);
 
     ShopDto getShopById(Long id);
     List<ShopDto> getAllShops();

@@ -9,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
+
 @RestController
 @RequestMapping("/api/shops")
 @RequiredArgsConstructor
@@ -16,12 +18,10 @@ public class ShopController {
 
     private final ShopService shopService;
 
-    @PostMapping("/add")
-    public ResponseEntity<ShopDto> create(
-            @RequestPart("dto") ShopDto dto,
-            @RequestPart(value = "logoImage", required = false) MultipartFile logoImage
+    @PostMapping(path = "/add", consumes = MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> create(@ModelAttribute ShopDto dto
     ) {
-        return ResponseEntity.ok(shopService.createShop(dto, logoImage));
+        return ResponseEntity.ok(shopService.createShop(dto));
     }
 
     @GetMapping("/{id}")
