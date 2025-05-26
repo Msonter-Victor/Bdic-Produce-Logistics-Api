@@ -1,0 +1,28 @@
+[33m38d70b1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Remove secrets file from tracking
+[33md5aad20[m Remove secrets and recommit
+[33me59a76e[m commit
+[33m3b1f867[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m added chat module
+[33mb0c1e22[m Cleaned up commit history after removing top two commits
+[33m9dbe91b[m states and LGAs and WARDs added secrets deleted
+[33meda00c1[m commit
+[33m4b6761f[m commit
+[33mcb0c11c[m commit
+[33m342a3db[m commit
+[33mac6ba6e[m commit
+[33m12e433c[m Added security configuration to api gateway
+[33mcfee687[m Removed Mailgun API key and added secrets.properties to gitignore
+[33m59ad450[m Merge pull request #1 from Msonter-Victor/dev
+[33mcb880c0[m vendor modue started
+[33m0adb651[m api Gatewayservice added
+[33ma7a5530[m another commit 2 after git reset --soft HEAD~6 II email  resend endpoint implemented
+[33m36335f9[m another commit 2 after git reset --soft HEAD~6 II
+[33m2e06891[m another commit after git reset --soft HEAD~6
+[33m5af2a63[m git reset --soft HEAD~6
+[33m92d9b77[m 3rd work on UserService error free
+[33mfb60d9d[m the third build 2
+[33mc56de02[m the third build
+[33mbf68ddf[m ignore
+[33m3503247[m Development brach by Bemgba
+[33md080612[m refactored gateway
+[33m33cc8fe[m commit
+[33m1e48b18[m initial commit
