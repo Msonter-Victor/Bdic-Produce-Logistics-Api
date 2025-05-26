@@ -17,6 +17,7 @@
         <module>UserService</module>
         <module>apiGateWayService</module>
         <module>VendorService</module>
+        <module>chat</module>
 
 
     </modules>
