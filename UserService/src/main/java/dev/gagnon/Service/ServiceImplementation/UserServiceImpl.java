@@ -182,8 +182,14 @@ public ResponseEntity<?> handleForgotPassword(String email) {
     }
 }
 
+    @Override
+    public User findByEmail(String username) {
+        return userRepository.findByEmail(username)
+                .orElseThrow(()->new RuntimeException("User not found."));
+    }
 
-//RESET PASSWORD
+
+    //RESET PASSWORD
 @Override
 public void resetPassword(ResetPasswordRequest dto) {
     User user = userRepository.findByPasswordResetToken(dto.getToken())

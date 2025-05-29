@@ -1,6 +1,6 @@
 spring:
   application:
-    name: VENDOR-SERVICE
+    name: vendor-service
   config:
     import: secrets.properties
   servlet:

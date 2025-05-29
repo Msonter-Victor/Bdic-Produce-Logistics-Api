@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()   // login/signup public
                         .requestMatchers("/api/roles/AddRoles").permitAll()
                         .requestMatchers("/api/users/resend-verification").permitAll()
+                        .requestMatchers("/api/users/all").permitAll()
                         .requestMatchers("/api/users/register").permitAll()
                         .requestMatchers("/api/roles/allRoles").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
@@ -51,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/vendor/**").hasAuthority("VENDOR")
                         .requestMatchers("/api/logistics/**").hasAuthority("LOGISTICS")
                         .requestMatchers("/api/buyer/**").hasAuthority("BUYER")
+                        .requestMatchers("api/auth/profile").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

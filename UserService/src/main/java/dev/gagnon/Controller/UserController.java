@@ -2,6 +2,7 @@ package dev.gagnon.Controller;
 import dev.gagnon.DTO.AuthRequest;
 import dev.gagnon.DTO.AuthResponse;
 import dev.gagnon.DTO.UserRegistrationRequest;
+import dev.gagnon.DTO.UserResponse;
 import dev.gagnon.Model.Role;
 import dev.gagnon.Model.User;
 import dev.gagnon.Repository.RoleRepository;
@@ -32,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -225,4 +227,12 @@ public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
     }
 }
 
+@GetMapping("/all")
+public ResponseEntity<?> getAllUsers(){
+    List<User>users = userRepository.findAll();
+    List<UserResponse> userResponses = users.stream()
+            .map(UserResponse::new)
+            .toList();
+    return new ResponseEntity<>(userResponses, HttpStatus.OK);
+}
 }

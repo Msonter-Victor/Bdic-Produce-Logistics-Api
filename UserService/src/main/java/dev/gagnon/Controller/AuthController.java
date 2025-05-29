@@ -4,6 +4,7 @@ import dev.gagnon.DTO.AuthRequest;
 import dev.gagnon.DTO.AuthResponse;
 import dev.gagnon.DTO.ForgotPasswordRequest;
 import dev.gagnon.DTO.ResetPasswordRequest;
+import dev.gagnon.Model.User;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.JwtService;
 import dev.gagnon.Service.UserService;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -55,6 +57,18 @@ public class AuthController {
         } catch (DisabledException e) {
             return ResponseEntity.status(403).body("Account not verified, Check your email to verify");
         }
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userService.findByEmail(userDetails.getUsername());
+
+        return ResponseEntity.ok(Map.of(
+                "firstName", user.getSurname(),
+                "lastName", user.getOtherName(),
+                "email", user.getEmail()
+        ));
     }
 
 

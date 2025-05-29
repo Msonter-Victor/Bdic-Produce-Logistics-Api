@@ -22,167 +22,172 @@ spring:
         - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
-            - Path=/ws-chat/**
+            - Path=/ws/**
 
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/users/**
+            - Path=/api/users/**,/api/auth/**,/api/roles/**
 
-        - id: user-auth-login
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/auth/login
-
-        - id: auth-service
-          uri: lb://AUTH-SERVICE
-          predicates:
-            - Path=/api/auth2/**
-
-        - id: user-dashboard-redirect
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/dashboard-redirect
-
-        - id: user-register
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/users/register
-
-        - id: user-verify
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/users/verify
-
-        - id: user-test-email
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/auth/test-email
-
-        - id: user-reset-password
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/auth/reset-password
-
-        - id: user-add-roles
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/roles/AddRoles
-
-        - id: user-role-all
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/roles/allRoles
-
-        - id: user-forgot-password
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/auth/forgot-password
-
-        - id: user-add-role-update
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/users/add-role
-
-        - id: status-add
+        - id: vendor-service
           uri: lb://VENDOR-SERVICE
           predicates:
-            - Path=/api/statuses/addStatus
+            - Path=/api/council-wards/**,/api/local-governments/**,/api/markets/**,/api/market-sections/**,/api/states/**,/api/statuses/**,/api/shops/**,/api/categories/**
 
-        - id: buyer-service
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/buyer/**
-
-        - id: status-view-all
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/viewAllStatus
-
-        - id: status-view-single
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/get/{id}
-
-        - id: status-update
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/update/{id}
-
-        - id: status-delete
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/delete/{id}
-
-        - id: market-add
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/add
-
-        - id: market-view-single
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/{id}
-
-        - id: market-delete
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/delete/{id}
-
-        - id: market-view-all
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/all
-
-        - id: market-update
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/update/{id}
-
-        - id: market-section-view-all
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/market-sections/all
-
-        - id: market-section-update
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/market-sections/update/{id}
-
-        - id: market-section-add
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/market-sections/add
-
-        - id: shop-add
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/shops/add
-
-        - id: shop-view-all
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/shops/all
-
-        - id: shop-update
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/shops/update/{id}
-
-        - id: states-all
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/states/all
-
-        - id: lga-all
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/local-governments/all
-
-        - id: council-wards-all
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/council-wards/all
+#        - id: user-dashboard-redirect
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/dashboard-redirect
+#
+#        - id: user-register
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/users/register
+#
+#        - id: get-all
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/users/all
+#
+#        - id: user-verify
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/users/verify
+#
+#        - id: user-test-email
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/auth/test-email
+#
+#        - id: profile
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/auth/profile
+#
+#        - id: user-reset-password
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/auth/reset-password
+#
+#        - id: user-add-roles
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/roles/AddRoles
+#
+#        - id: user-role-all
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/roles/allRoles
+#
+#        - id: user-forgot-password
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/auth/forgot-password
+#
+#        - id: user-add-role-update
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/users/add-role
+#
+#        - id: status-add
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/statuses/addStatus
+#
+#        - id: buyer-service
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/api/buyer/**
+#
+#        - id: status-view-all
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/statuses/viewAllStatus
+#
+#        - id: status-view-single
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/statuses/get/{id}
+#
+#        - id: status-update
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/statuses/update/{id}
+#
+#        - id: status-delete
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/statuses/delete/{id}
+#
+#        - id: market-add
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/markets/add
+#
+#        - id: market-view-single
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/markets/{id}
+#
+#        - id: market-delete
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/markets/delete/{id}
+#
+#        - id: market-view-all
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/markets/all
+#
+#        - id: market-update
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/markets/update/{id}
+#
+#        - id: market-section-view-all
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/market-sections/all
+#
+#        - id: market-section-update
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/market-sections/update/{id}
+#
+#        - id: market-section-add
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/market-sections/add
+#
+#        - id: shop-add
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/shops/add
+#
+#        - id: shop-view-all
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/shops/all
+#
+#        - id: shop-update
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/shops/update/{id}
+#
+#        - id: states-all
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/states/all
+#
+#        - id: lga-all
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/local-governments/all
+#
+#        - id: council-wards-all
+#          uri: lb://VENDOR-SERVICE
+#          predicates:
+#            - Path=/api/council-wards/all
 
 eureka:
   client:
