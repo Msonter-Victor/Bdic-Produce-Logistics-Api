@@ -41,14 +41,14 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .authorizeHttpRequests(auth -> auth
                       //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
-                        .requestMatchers("/api/auth/**").permitAll()   // login/signup public
+                        //.requestMatchers("/api/auth/**").permitAll()   // login/signup public
                         .requestMatchers("/api/roles/AddRoles").permitAll()     // ✅ PUBLIC getAllRoles
                         .requestMatchers("/api/users/resend-verification").permitAll()
                       .requestMatchers("/api/users/register").permitAll()
                       .requestMatchers("/api/roles/allRoles").permitAll()
                       .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                        // .requestMatchers(HttpMethod.OPTIONS, "/api/auth/login").permitAll()
-                      .requestMatchers("/api/auth/login").permitAll()
+                     // .requestMatchers("/api/auth/login").permitAll()
                       .requestMatchers("/api/auth/test-email").permitAll()
                       .requestMatchers("/api/users/verify").permitAll()
                       .requestMatchers("/api/auth/forgot-password").permitAll()

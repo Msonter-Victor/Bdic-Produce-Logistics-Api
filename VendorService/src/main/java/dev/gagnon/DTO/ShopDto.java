@@ -9,7 +9,7 @@ public class ShopDto {
     private Long id;
     private String name;
     private String address;
-    private String logoImage;
+
     private String shopNumber;
     private String homeAddress;
     private String streetName;

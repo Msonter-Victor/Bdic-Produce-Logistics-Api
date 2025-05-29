@@ -34,26 +34,43 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
+                        .requestMatchers("/api/statuses/**").permitAll()
                         .requestMatchers("/api/statuses/viewAllStatus").permitAll()
                         .requestMatchers("/api/statuses/addStatus").permitAll()
-
                         .requestMatchers("/api/statuses/get/{id}").permitAll()
                         .requestMatchers("/api/statuses/delete/{id}").permitAll()
                         .requestMatchers("/api/statuses/update/{id}").permitAll()
+
+                        .requestMatchers("/api/markets/**").permitAll()
                         .requestMatchers("/api/markets/all").permitAll()
                         .requestMatchers("/api/markets/add").permitAll()
                         .requestMatchers("/api/markets/{id}").permitAll()
                         .requestMatchers("/api/markets/delete/{id}").permitAll()
                         .requestMatchers("/api/markets/update/{id}").permitAll()
+
+                        .requestMatchers("/api/market-sections/**").permitAll()
                         .requestMatchers("/api/market-sections/add").permitAll()
                         .requestMatchers("/api/market-sections/all").permitAll()
                         .requestMatchers("/api/market-sections/update/{id}").permitAll()
+
                         .requestMatchers("/api/shops/add").permitAll()
                         .requestMatchers("/api/shops/all").permitAll()
+                        .requestMatchers("/api/shops/**").permitAll()
                         .requestMatchers("/api/shops/update/{id}").permitAll()
+
                         .requestMatchers("/api/states/all").permitAll()
                         .requestMatchers("/api/local-governments/all").permitAll()
                         .requestMatchers("/api/council-wards/all").permitAll()
+
+                        //.requestMatchers("/api/categories/**").authenticated()
+                        .requestMatchers("/api/categories/add").authenticated()
+                        .requestMatchers("/api/categories/all").permitAll()
+
+                        .requestMatchers("/api/products/**").permitAll()
+                        .requestMatchers("/api/products/all").permitAll()
+                        .requestMatchers("/api/products/add").authenticated()
+                        .requestMatchers("/api/products/{id}").permitAll()
+                        .requestMatchers("/api/products/update/{id}").authenticated()
 
                         .requestMatchers("/api/buyer/**").hasAuthority("BUYER")
                         .anyRequest().authenticated()

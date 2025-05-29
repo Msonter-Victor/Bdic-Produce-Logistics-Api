@@ -1,5 +1,6 @@
 package dev.gagnon.Service.Implementation;
 
+import com.cloudinary.Cloudinary;
 import dev.gagnon.DTO.ShopDto;
 import dev.gagnon.Exception.ResourceNotFoundException;
 import dev.gagnon.Model.*;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
+
 @Service
 @RequiredArgsConstructor
 public class ShopServiceImpl implements ShopService {
@@ -26,30 +29,33 @@ public class ShopServiceImpl implements ShopService {
     private final MarketSectionRepository marketSectionRepository;
     private final UserRepository userRepository;
     private final StatusRepository statusRepository;
+    private final Cloudinary cloudinary;
 
-    @Value("${app.upload.dir:${user.dir}/uploads}") // Default to 'uploads' folder
+    @Value("${app.upload.dir:${user.dir}/uploads}") // Default directory for local storage
     private String uploadDir;
 
     @Override
     public ShopDto createShop(ShopDto dto, MultipartFile logoImage) {
         String imagePath = null;
 
+        // Handle file upload if provided
         if (logoImage != null && !logoImage.isEmpty()) {
             try {
                 String uniqueFilename = UUID.randomUUID() + "_" + logoImage.getOriginalFilename();
                 File destinationFile = new File(uploadDir, uniqueFilename);
-                destinationFile.getParentFile().mkdirs(); // Create folder if not exists
+                destinationFile.getParentFile().mkdirs(); // Ensure the directory exists
                 logoImage.transferTo(destinationFile);
-                imagePath = "/uploads/" + uniqueFilename; // Relative path to be saved
+                imagePath = "/uploads/" + uniqueFilename; // Path to save in DB
             } catch (IOException e) {
                 throw new RuntimeException("Failed to upload logo image", e);
             }
         }
 
+        // Build and save the shop entity
         Shop shop = Shop.builder()
                 .name(dto.getName())
                 .address(dto.getAddress())
-                .logoImage(imagePath) // Save the path, not file
+                .logoImage(imagePath) // This is stored in the entity, not the DTO
                 .shopNumber(dto.getShopNumber())
                 .homeAddress(dto.getHomeAddress())
                 .streetName(dto.getStreetName())
@@ -92,7 +98,6 @@ public class ShopServiceImpl implements ShopService {
 
         shop.setName(dto.getName());
         shop.setAddress(dto.getAddress());
-        shop.setLogoImage(dto.getLogoImage()); // Path should be passed again or kept as-is
         shop.setShopNumber(dto.getShopNumber());
         shop.setHomeAddress(dto.getHomeAddress());
         shop.setStreetName(dto.getStreetName());
@@ -126,7 +131,7 @@ public class ShopServiceImpl implements ShopService {
                 .id(shop.getId())
                 .name(shop.getName())
                 .address(shop.getAddress())
-                .logoImage(shop.getLogoImage())
+                // .logoImage(shop.getLogoImage()) <-- Removed since not in DTO
                 .shopNumber(shop.getShopNumber())
                 .homeAddress(shop.getHomeAddress())
                 .streetName(shop.getStreetName())

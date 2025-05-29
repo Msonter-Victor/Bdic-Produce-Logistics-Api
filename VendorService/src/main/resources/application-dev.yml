@@ -8,7 +8,6 @@ spring:
       enabled: true
       max-file-size: 10MB
       max-request-size: 20MB
-
   pulsar:
     client:
       url: pulsar://localhost:6650
@@ -48,6 +47,7 @@ cloud:
     name: ${CLOUD_API_NAME}
     secret: ${CLOUD_API_SECRET}
     key: ${CLOUD_API_KEY}
+
 
 server:
   port: 8983
