@@ -5,9 +5,10 @@ import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import java.util.Map;
 
+//public class CloudConfig {
+//}
 @Configuration
 public class CloudConfig {
     @Value("${cloud.api.name}")
@@ -20,7 +21,7 @@ public class CloudConfig {
     @Bean
     public Cloudinary cloudinary() {
         Map<?, ?> map = ObjectUtils.asMap(
-        "cloud_name", cloudName,
+                "cloud_name", cloudName,
                 "api_key", cloudApiKey,
                 "api_secret", cloudApiSecret
         );

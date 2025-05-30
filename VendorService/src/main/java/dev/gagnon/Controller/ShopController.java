@@ -3,13 +3,12 @@ package dev.gagnon.Controller;
 import dev.gagnon.DTO.ShopDto;
 import dev.gagnon.Service.ShopService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-
-import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 @RestController
 @RequestMapping("/api/shops")
@@ -18,10 +17,12 @@ public class ShopController {
 
     private final ShopService shopService;
 
-    @PostMapping(path = "/add", consumes = MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> create(@ModelAttribute ShopDto dto
+    @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ShopDto> create(
+            @ModelAttribute ShopDto dto, // Changed from @RequestPart("dto")
+            @RequestPart(value = "logoImage", required = false) MultipartFile logoImage
     ) {
-        return ResponseEntity.ok(shopService.createShop(dto));
+        return ResponseEntity.ok(shopService.createShop(dto, logoImage));
     }
 
     @GetMapping("/{id}")

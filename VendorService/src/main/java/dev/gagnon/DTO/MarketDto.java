@@ -10,12 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 public class MarketDto {
-    private Long id;
     private String name;
     private String address;
     private String city;
     private Integer lines;
     private Integer shops;
     private Long councilWardId; // Foreign Key
-    private String createdAt;
 }

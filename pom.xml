@@ -18,6 +18,7 @@
         <module>apiGateWayService</module>
         <module>VendorService</module>
         <module>chat</module>
+        <module>orderService</module>
 
 
     </modules>

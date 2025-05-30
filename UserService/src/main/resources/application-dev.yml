@@ -52,3 +52,4 @@ cloud:
 server:
   port: 8982
   address: 0.0.0.0
+

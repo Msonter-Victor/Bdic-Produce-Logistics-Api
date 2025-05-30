@@ -31,17 +31,31 @@ public class ShopServiceImpl implements ShopService {
     private final StatusRepository statusRepository;
     private final Cloudinary cloudinary;
 
-    @Value("${app.upload.dir:${user.dir}/uploads}") // Default to 'uploads' folder
+    @Value("${app.upload.dir:${user.dir}/uploads}") // Default directory for local storage
     private String uploadDir;
 
     @Override
-    public ShopDto createShop(ShopDto dto) {
-        String imagePath = getMediaUrl(dto.getMediaFile(), cloudinary.uploader());
+    public ShopDto createShop(ShopDto dto, MultipartFile logoImage) {
+        String imagePath = null;
 
+        // Handle file upload if provided
+        if (logoImage != null && !logoImage.isEmpty()) {
+            try {
+                String uniqueFilename = UUID.randomUUID() + "_" + logoImage.getOriginalFilename();
+                File destinationFile = new File(uploadDir, uniqueFilename);
+                destinationFile.getParentFile().mkdirs(); // Ensure the directory exists
+                logoImage.transferTo(destinationFile);
+                imagePath = "/uploads/" + uniqueFilename; // Path to save in DB
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to upload logo image", e);
+            }
+        }
+
+        // Build and save the shop entity
         Shop shop = Shop.builder()
                 .name(dto.getName())
                 .address(dto.getAddress())
-                .logoImage(imagePath) // Save the path, not file
+                .logoImage(imagePath) // This is stored in the entity, not the DTO
                 .shopNumber(dto.getShopNumber())
                 .homeAddress(dto.getHomeAddress())
                 .streetName(dto.getStreetName())
@@ -84,7 +98,6 @@ public class ShopServiceImpl implements ShopService {
 
         shop.setName(dto.getName());
         shop.setAddress(dto.getAddress());
-        shop.setLogoImage(dto.getLogoImage()); // Path should be passed again or kept as-is
         shop.setShopNumber(dto.getShopNumber());
         shop.setHomeAddress(dto.getHomeAddress());
         shop.setStreetName(dto.getStreetName());
@@ -118,7 +131,7 @@ public class ShopServiceImpl implements ShopService {
                 .id(shop.getId())
                 .name(shop.getName())
                 .address(shop.getAddress())
-                .logoImage(shop.getLogoImage())
+                // .logoImage(shop.getLogoImage()) <-- Removed since not in DTO
                 .shopNumber(shop.getShopNumber())
                 .homeAddress(shop.getHomeAddress())
                 .streetName(shop.getStreetName())

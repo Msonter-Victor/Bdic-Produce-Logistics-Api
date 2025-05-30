@@ -1,0 +1,7 @@
+-- TRUNCATE TABLE statuses CASCADE;
+--
+--
+-- insert into statuses(id, created_at, name, created_by)values
+-- (100, 'Doe', 'John', 'darhyor2050@gmail.com', 'password', '2024-07-23T15:03:03.792009700'),
+-- (101, 'Bull', 'Joe', 'bulljoe@gmail.com', 'password', '2024-07-23T15:03:03.792009700'),
+-- (103, 'Sam', 'Cole', 'colesam@gmail.com', '$2a$10$seAKbpBsTn/xgAg7nbRKWuH1dnRvMlLloxMOjH00zMmTu3vLCtlee', '2024-07-23T15:03:03.792009700');
