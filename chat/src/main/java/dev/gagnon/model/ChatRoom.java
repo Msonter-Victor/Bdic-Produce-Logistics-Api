@@ -1,29 +1,20 @@
 package dev.gagnon.model;
 
-
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Entity
-@Table(name = "chat_room")
+@Table(name = "chat_rooms")
 public class ChatRoom {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long roomId;
     
-    @Column(name = "chat_id")
-    private Long chatId;
-    
-    @Column(name = "sender_id")
-    private Long senderId;
-    
-    @Column(name = "recipient_id")
-    private Long recipientId;
+    private String buyerUsername;
+    private String sellerUsername;
+    private Long productId;
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

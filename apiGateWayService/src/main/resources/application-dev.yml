@@ -14,21 +14,37 @@ spring:
           lower-case-service-id: true
 
       routes:
+        # Existing routes...
         - id: order-service
           uri: lb://ORDER-SERVICE
           predicates:
-            - Path=/api/orders/**
+            - Path=/api/orders/**, /api/cart/**
 
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
           predicates:
             - Path=/api/payments/**
+        - id: logistics-service
+          uri: lb://LOGISTICS-SERVICE
+          predicates:
+            - Path=/api/logistics/**
 
-        - id: chat-service
+        # WebSocket and HTTP routes for chat service
+        - id: chat-ws
           uri: lb://CHAT-SERVICE
           predicates:
-            - Path=/ws/**
+            - Path=/ws-chat/**
+          filters:
+            - RewritePath=/ws-chat/(?<segment>.*), /$\{segment}
 
+        - id: chat-service-http
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/api/chat/**
+          filters:
+            - RewritePath=/api/chat/(?<segment>.*), /api/chat/$\{segment}
+
+        # Other existing services...
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
@@ -39,7 +55,6 @@ spring:
           predicates:
             - Path=/api/council-wards/**,/api/local-governments/**,/api/markets/**,/api/market-sections/**,/api/states/**,/api/statuses/**,/api/shops/**,/api/categories/**,/api/products/**
 
-
 eureka:
   client:
     hostname: localhost
@@ -48,7 +63,6 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
-      #defaultZone: http://41.78.80.108:8761/eureka/
 
 logging:
   level:

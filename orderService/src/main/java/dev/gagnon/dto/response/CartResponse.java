@@ -1,20 +1,19 @@
 package dev.gagnon.dto.response;
 
-import lombok.Builder;
+import dev.gagnon.dto.request.CartItemDto;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CartResponse {
-    private Long id;
-    private Long userId;
-    private List<CartItemResponse> items;
+    private String cartId;
+    private List<CartItemDto> items;
     private BigDecimal totalAmount;
-    private Integer totalItems;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private int totalItems;
 }

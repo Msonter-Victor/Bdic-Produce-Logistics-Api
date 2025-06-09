@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateCartItemRequest {
     @Min(1)
-    private Integer quantity;
+    private int quantity;
 }

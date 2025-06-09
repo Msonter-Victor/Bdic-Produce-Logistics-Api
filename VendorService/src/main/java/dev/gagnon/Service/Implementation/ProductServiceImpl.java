@@ -1,9 +1,12 @@
 package dev.gagnon.Service.Implementation;
 
+import com.cloudinary.Cloudinary;
 import dev.gagnon.DTO.ApiResponse;
 import dev.gagnon.DTO.ApiResponse2;
 import dev.gagnon.DTO.ProductDto;
 import dev.gagnon.DTO.ProductResponseDto;
+import dev.gagnon.Exception.BusinessException;
+import dev.gagnon.Exception.ResourceNotFoundException;
 import dev.gagnon.Model.Category;
 import dev.gagnon.Model.Product;
 import dev.gagnon.Model.Shop;
@@ -24,6 +27,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
+
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -31,6 +36,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepo;
     private final ShopRepository shopRepo;
     private final CategoryRepository categoryRepo;
+    private final Cloudinary cloudinary;
 // Inject from properties file
 // @Value("${upload.dir}")
 // private String uploadDir;
@@ -50,11 +56,11 @@ public class ProductServiceImpl implements ProductService {
 //            return new ApiResponse<>(false, "Invalid shop or category", null);
 //        }
         // Upload images and get URLs
-        String mainImageUrl = saveImage(mainImage);
-        String sideImage1Url = saveImage(sideImage1);
-        String sideImage2Url = saveImage(sideImage2);
-        String sideImage3Url = saveImage(sideImage3);
-        String sideImage4Url = saveImage(sideImage4);
+        String mainImageUrl = getMediaUrl(mainImage, cloudinary.uploader());
+        String sideImage1Url = getMediaUrl(sideImage1, cloudinary.uploader());
+        String sideImage2Url = getMediaUrl(sideImage2, cloudinary.uploader());
+        String sideImage3Url = getMediaUrl(sideImage3, cloudinary.uploader());
+        String sideImage4Url = getMediaUrl(sideImage4, cloudinary.uploader());
 
         Product product = Product.builder()
                 .name(dto.getName())
@@ -78,11 +84,11 @@ public class ProductServiceImpl implements ProductService {
         return new ApiResponse<>(true, "Product created successfully", responseDto);
     }
 
+
     @Override
-    public ApiResponse2<ProductResponseDto> getProductById(Long id) {
-        return productRepo.findById(id)
-                .map(product -> new ApiResponse2<>(true, "Success", mapToDto4SingleProduct(product)))
-                .orElse(new ApiResponse2<>(false, "Product not found", null));
+    public ProductResponseDto getProductById(Long id) {
+        Product product = productRepo.findById(id).orElseThrow(()->new ResourceNotFoundException("product not found"));
+        return mapToDto4SingleProduct(product);
     }
 
     @Override
@@ -121,7 +127,51 @@ public class ProductServiceImpl implements ProductService {
         return new ApiResponse<>(true, "Product deleted", null);
     }
 
-//    private String saveImage(MultipartFile file) {
+    public boolean checkProductAvailability(Long productId, Integer requestedQuantity) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        return product.getQuantity() >= requestedQuantity;
+    }
+
+    public ApiResponse<Void> updateProductStock(Long productId, Integer quantityChange) {
+        try {
+            Product product = productRepo.findById(productId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+            int newQuantity = product.getQuantity() + quantityChange;
+            if (newQuantity < 0) {
+                throw new ResourceNotFoundException("Insufficient stock available");
+            }
+
+            product.setQuantity(newQuantity);
+            productRepo.save(product);
+
+            return new ApiResponse<>(true, "Stock updated successfully", null);
+        } catch (ResourceNotFoundException e) {
+            return new ApiResponse<>(false, e.getMessage(), null);
+        }
+    }
+
+    public ApiResponse<Void> updateProductQuantity(Long productId, Integer newQuantity) {
+        try {
+            if (newQuantity < 0) {
+                throw new BusinessException("Quantity cannot be negative");
+            }
+
+            Product product = productRepo.findById(productId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+            product.setQuantity(newQuantity);
+            productRepo.save(product);
+
+            return new ApiResponse<>(true, "Quantity updated successfully", null);
+        } catch (ResourceNotFoundException | BusinessException e) {
+            return new ApiResponse<>(false, e.getMessage(), null);
+        }
+    }
+
+    //    private String saveImage(MultipartFile file) {
 //        if (file == null || file.isEmpty()) return null;
 //
 //        try {
@@ -211,5 +261,7 @@ public class ProductServiceImpl implements ProductService {
 
         return dto;
     }
+
+
 
 }

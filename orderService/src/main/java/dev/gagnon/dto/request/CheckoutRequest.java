@@ -1,22 +1,19 @@
 package dev.gagnon.dto.request;
 
-import dev.gagnon.model.DeliveryMethod;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CheckoutRequest {
-    private DeliveryMethod deliveryMethod;
+    @NotBlank
+    private String deliveryMethod; // "pickup" or "delivery"
     
+    @NotBlank
     private String address;
-
     
-    // For shop pickup
-    private String shopLocation;
-    private LocalDateTime pickupTime;
+    private String paymentMethod;
 }

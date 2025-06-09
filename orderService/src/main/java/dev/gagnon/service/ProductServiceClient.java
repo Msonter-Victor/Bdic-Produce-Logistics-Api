@@ -1,48 +1,58 @@
 package dev.gagnon.service;
 
-import dev.gagnon.dto.response.ProductResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import dev.gagnon.dto.response.ProductResponseDto;
+import dev.gagnon.exception.BusinessException;
+import dev.gagnon.exception.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ProductServiceClient {
     
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
+
     
-    @Value("${services.vendor-service.url}")
-    private String vendorServiceUrl;
-    
-    public ProductResponse getProduct(Long productId) {
+    public ProductResponseDto getProduct(Long productId) {
         try {
-            String url = vendorServiceUrl + "/api/products/" + productId;
-            return restTemplate.getForObject(url, ProductResponse.class);
+
+            ResponseEntity<ProductResponseDto> response = restTemplate.getForEntity(
+                "https://api.digitalmarke.bdic.ng/api/products/{id}",
+                ProductResponseDto.class,
+                    productId
+            );
+            return response.getBody();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch product: " + productId, e);
+            throw new ResourceNotFoundException("Product not found: " + productId);
         }
     }
     
     public boolean checkProductAvailability(Long productId, Integer quantity) {
         try {
-            String url = vendorServiceUrl + "/products/" + productId + "/availability?quantity=" + quantity;
-            Boolean available = restTemplate.getForObject(url, Boolean.class);
-            return available == null || !available;
+            String url = "http://vendor-service/api/products/{id}" + "/availability?quantity=" + quantity;
+            ResponseEntity<Boolean> response = restTemplate.getForEntity(
+                url, 
+                Boolean.class,
+                    productId
+            );
+            return Boolean.TRUE.equals(response.getBody());
         } catch (Exception e) {
-            return true;
+            return false;
         }
     }
     
     public void updateProductStock(Long productId, Integer quantity) {
         try {
-            String url = vendorServiceUrl + "/products/" + productId + "/stock";
+            String url = "http://api/products/" + productId + "/stock";
             Map<String, Integer> request = Map.of("quantity", quantity);
             restTemplate.put(url, request);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to update product stock: " + productId, e);
+            throw new BusinessException("Failed to update product stock: " + productId);
         }
     }
 }

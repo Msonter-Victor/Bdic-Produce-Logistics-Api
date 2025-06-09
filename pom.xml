@@ -19,6 +19,7 @@
         <module>VendorService</module>
         <module>chat</module>
         <module>orderService</module>
+        <module>logistics</module>
 
 
     </modules>

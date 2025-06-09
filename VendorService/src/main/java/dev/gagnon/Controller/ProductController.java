@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
@@ -42,11 +43,9 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse2<ProductResponseDto>> getById(@PathVariable Long id) {
-        ApiResponse2<ProductResponseDto> response = productService.getProductById(id);
-        return ResponseEntity
-                .status(response.isSuccess() ? 200 : 404)
-                .body(response);
+    public ResponseEntity<ProductResponseDto> getById(@PathVariable Long id) {
+        ProductResponseDto response = productService.getProductById(id);
+        return ResponseEntity.ok().body(response);
     }
 
 
@@ -92,6 +91,36 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error loading image: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<Boolean> checkAvailability(
+            @PathVariable Long id,
+            @RequestParam Integer quantity) {
+        boolean isAvailable = productService.checkProductAvailability(id, quantity);
+        return ResponseEntity.ok(isAvailable);
+    }
+
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<ApiResponse<Void>> updateStock(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> request) {
+        Integer quantity = request.get("quantity");
+        ApiResponse<Void> response = productService.updateProductStock(id, quantity);
+        return ResponseEntity
+                .status(response.isSuccess() ? 200 : 404)
+                .body(response);
+    }
+
+    @PutMapping("/{id}/quantity")
+    public ResponseEntity<ApiResponse<Void>> updateQuantity(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> request) {
+        Integer quantity = request.get("quantity");
+        ApiResponse<Void> response = productService.updateProductQuantity(id, quantity);
+        return ResponseEntity
+                .status(response.isSuccess() ? 200 : 404)
+                .body(response);
     }
 
 }

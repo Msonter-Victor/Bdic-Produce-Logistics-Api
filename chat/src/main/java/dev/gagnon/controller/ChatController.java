@@ -1,56 +1,52 @@
 package dev.gagnon.controller;
 
+import dev.gagnon.dto.ChatMessageRequest;
+import dev.gagnon.dto.ChatMessageResponse;
 import dev.gagnon.model.ChatMessage;
-import dev.gagnon.model.ChatNotification;
-import dev.gagnon.service.ChatMessageService;
-import dev.gagnon.service.ChatRoomService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import dev.gagnon.service.ChatService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
+@RequiredArgsConstructor
 public class ChatController {
-    @Autowired private SimpMessagingTemplate messagingTemplate;
-    @Autowired private ChatMessageService chatMessageService;
-    @Autowired
-    private ChatRoomService chatRoomService;
 
-    @MessageMapping("/chat")
-    public void processMessage(@Payload ChatMessage chatMessage) {
-        var chatId = chatRoomService
-                .getChatId(chatMessage.getSenderId(), chatMessage.getRecipientId(), true);
-        chatMessage.setChatId(chatId.get());
+    private final ChatService chatService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-        ChatMessage saved = chatMessageService.save(chatMessage);
+    @MessageMapping("/chat.send")
+    public void sendMessage(@Payload ChatMessageRequest request) {
+        ChatMessage savedMessage = chatService.saveMessage(request);
+        ChatMessageResponse response = ChatMessageResponse.fromEntity(savedMessage);
+        
+        // Send to both participants
         messagingTemplate.convertAndSendToUser(
-                chatMessage.getRecipientId().toString(), "/queue/messages",
-                new ChatNotification(
-                        saved.getId(),
-                        saved.getSenderId(),
-                        saved.getSenderName()));
+            request.getRecipientUsername(), 
+            "/queue/messages", 
+            response
+        );
+        messagingTemplate.convertAndSendToUser(
+            request.getSenderUsername(), 
+            "/queue/messages", 
+            response
+        );
+        
+        // Also send to the specific chat room
+        messagingTemplate.convertAndSend(
+            "/topic/chat." + generateChatId(request.getSenderUsername(), request.getRecipientUsername()),
+            response
+        );
     }
 
-    @GetMapping("/messages/{senderId}/{recipientId}/count")
-    public ResponseEntity<Long> countNewMessages(
-            @PathVariable Long senderId,
-            @PathVariable Long recipientId) {
-        return ResponseEntity.ok(chatMessageService.countNewMessages(senderId, recipientId));
-    }
-
-    @GetMapping("/messages/{senderId}/{recipientId}")
-    public ResponseEntity<?> findChatMessages(
-            @PathVariable Long senderId,
-            @PathVariable Long recipientId) {
-        return ResponseEntity.ok(chatMessageService.findChatMessages(senderId, recipientId));
-    }
-
-    @GetMapping("/messages/{id}")
-    public ResponseEntity<?> findMessage(@PathVariable Long id) {
-        return ResponseEntity.ok(chatMessageService.findById(id));
+    private String generateChatId(String user1, String user2) {
+        return Stream.of(user1, user2)
+                   .sorted()
+                   .collect(Collectors.joining("_"));
     }
 }

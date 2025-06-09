@@ -2,6 +2,7 @@ package dev.gagnon.Util;
 
 import com.cloudinary.Uploader;
 import com.cloudinary.utils.ObjectUtils;
+import dev.gagnon.Exception.UploadMediaFailedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +22,7 @@ public class ServiceUtils {
             return uploadResponse.get("url").toString();
         } catch (Exception exception) {
             log.error("Error while uploading image to Cloudinary", exception);
-            throw new RuntimeException("a: "+exception.getMessage());
+            throw new UploadMediaFailedException("a: "+exception.getMessage());
         }
     }
 }

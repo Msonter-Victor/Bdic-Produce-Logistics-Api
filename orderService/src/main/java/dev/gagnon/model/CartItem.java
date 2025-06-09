@@ -16,22 +16,10 @@ public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id")
-    private Cart cart;
-    
-    @Column(nullable = false)
+
     private Long productId;
-    
+    private String name;
+    private BigDecimal unitPrice;
+    private String productImage;
     private Integer quantity;
-    
-//    private BigDecimal unitPrice;
-//
-//    private String productName;
-//    private String productImage;
-    
-//    public BigDecimal getTotalPrice() {
-//        return unitPrice.multiply(BigDecimal.valueOf(quantity));
-//    }
 }

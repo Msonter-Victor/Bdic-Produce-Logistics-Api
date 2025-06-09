@@ -1,319 +1,326 @@
 package dev.gagnon.service;
 
 import dev.gagnon.dto.request.AddToCartRequest;
+import dev.gagnon.dto.request.CartItemDto;
 import dev.gagnon.dto.request.CheckoutRequest;
 import dev.gagnon.dto.request.UpdateCartItemRequest;
 import dev.gagnon.dto.response.*;
+import dev.gagnon.exception.BusinessException;
+import dev.gagnon.exception.ResourceNotFoundException;
 import dev.gagnon.model.*;
-import dev.gagnon.repository.CartItemRepository;
 import dev.gagnon.repository.CartRepository;
-import dev.gagnon.repository.OrderItemRepository;
 import dev.gagnon.repository.OrderRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import dev.gagnon.utils.EventPublisherAdapter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class OrderService {
+    private static final int MAX_CART_ITEMS = 20;
+    private final EventPublisherAdapter eventPublisher;
     
-    @Autowired
-    private CartRepository cartRepository;
-    
-    @Autowired
-    private CartItemRepository cartItemRepository;
-    
-    @Autowired
-    private OrderRepository orderRepository;
-    
-    @Autowired
-    private OrderItemRepository orderItemRepository;
-    
-    @Autowired
-    private ProductServiceClient productServiceClient;
-    
-    @Autowired
-    private UserServiceClient userServiceClient;
-    
+    private final CartRepository cartRepository;
+    private final OrderRepository orderRepository;
+    private final ProductServiceClient productServiceClient;
 
-    // CART OPERATIONS
-    public CartResponse addToCart(AddToCartRequest request) {
-        // Validate product exists and is available
-        ProductResponse product = productServiceClient.getProduct(request.getProductId());
-        if (product == null) {
-            throw new RuntimeException("Product not found: " + request.getProductId());
+    public CartResponse addToCart(String cartId, String buyerEmail, AddToCartRequest request) {
+        ProductResponseDto product = productServiceClient.getProduct(request.getProductId());
+        validateProductAvailability(product, request.getQuantity());
+
+        Cart cart = getOrCreateCart(cartId, buyerEmail);
+
+        if (cart.getItems().size() >= MAX_CART_ITEMS) {
+            throw new BusinessException("Cart cannot contain more than " + MAX_CART_ITEMS + " items");
         }
-        
-//        if (productServiceClient.checkProductAvailability(request.getProductId(), request.getQuantity())) {
-//            throw new RuntimeException("Insufficient product stock");
-//        }
 
-        // Get or create cart
-        Cart cart = cartRepository.findByUserId(request.getUserId())
-                .orElse(new Cart(null, request.getUserId(), new ArrayList<>(), null, null));
-        
-        if (cart.getId() == null) {
+        Optional<CartItem> existingItem = cart.getItems().stream()
+            .filter(item -> item.getProductId().equals(product.getId()))
+            .findFirst();
+
+        if (existingItem.isPresent()) {
+            CartItem item = existingItem.get();
+            item.setQuantity(item.getQuantity() + request.getQuantity());
+        } else {
+            CartItem newItem = new CartItem();
+            newItem.setProductId(product.getId());
+            newItem.setName(product.getName());
+            newItem.setUnitPrice(BigDecimal.valueOf(product.getPrice()));
+            newItem.setProductImage(product.getMainImageUrl());
+            newItem.setQuantity(request.getQuantity());
+            cart.getItems().add(newItem);
+        }
+
+        cart.setUpdatedAt(LocalDateTime.now());
+        Cart savedCart = cartRepository.save(cart);
+        return mapToCartResponse(savedCart);
+    }
+
+    public CartResponse getCart(String cartId, String buyerEmail) {
+        Cart cart = cartRepository.findByCartIdOrBuyerEmail(cartId, buyerEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
+        // Validate all items are still available
+        List<CartItem> validItems = cart.getItems().stream()
+            .filter(item -> {
+                try {
+                    ProductResponseDto product = productServiceClient.getProduct(item.getProductId());
+                    return product != null;
+                } catch (Exception e) {
+                    return false;
+                }
+            })
+            .collect(Collectors.toList());
+
+        if (validItems.size() != cart.getItems().size()) {
+            cart.setItems(validItems);
             cart = cartRepository.save(cart);
         }
         
-        // Check if item already exists in cart
-        Optional<CartItem> existingItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), request.getProductId());
-        
-        if (existingItem.isPresent()) {
-            // Update quantity
-            CartItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + request.getQuantity();
-            
-            if (productServiceClient.checkProductAvailability(request.getProductId(), newQuantity)) {
-                throw new RuntimeException("Insufficient product stock for updated quantity");
-            }
-            
-            item.setQuantity(newQuantity);
-            cartItemRepository.save(item);
-        } else {
-            // Add new item
-            CartItem newItem = new CartItem();
-            newItem.setCart(cart);
-            newItem.setProductId(request.getProductId());
-            newItem.setQuantity(request.getQuantity());
-//            newItem.setUnitPrice(product.getProductPrice());
-//            newItem.setProductName(product.getProductName());
-//            newItem.setProductImage(product.getImageUrl());
-            
-            cartItemRepository.save(newItem);
-            cart.getItems().add(newItem);
-        }
-        
-        return convertToCartResponse(cartRepository.save(cart));
+        return mapToCartResponse(cart);
     }
-    
-    public CartResponse updateCartItem(Long userId, Long itemId, UpdateCartItemRequest request) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
-        
-        CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found: " + itemId));
-        
-        if (!item.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("Cart item does not belong to user");
+
+    public CartResponse updateCartItem(String cartId, String buyerEmail, Long itemId, UpdateCartItemRequest request) {
+        Cart cart = cartRepository.findByCartIdOrBuyerEmail(cartId, buyerEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
+        CartItem item = cart.getItems().stream()
+            .filter(i -> i.getId().equals(itemId))
+            .findFirst()
+            .orElseThrow(() -> new ResourceNotFoundException("Item not found in cart"));
+
+        if (request.getQuantity() <= 0) {
+            throw new BusinessException("Quantity must be positive");
         }
-        
-        // Check product availability
-        if (productServiceClient.checkProductAvailability(item.getProductId(), request.getQuantity())) {
-            throw new RuntimeException("Insufficient product stock");
-        }
-        
+
+        ProductResponseDto product = productServiceClient.getProduct(item.getProductId());
+        validateProductAvailability(product, request.getQuantity());
+
         item.setQuantity(request.getQuantity());
-        cartItemRepository.save(item);
-        
-        return convertToCartResponse(cartRepository.findById(cart.getId()).orElse(cart));
+        cart.setUpdatedAt(LocalDateTime.now());
+        Cart savedCart = cartRepository.save(cart);
+        return mapToCartResponse(savedCart);
     }
-    
-    public CartResponse removeFromCart(Long userId, Long itemId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+
+    public CartResponse removeFromCart(String cartId, String buyerEmail, Long itemId) {
+        Cart cart = cartRepository.findByCartIdOrBuyerEmail(cartId, buyerEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
+        boolean removed = cart.getItems().removeIf(item -> item.getId().equals(itemId));
         
-        CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found: " + itemId));
-        
-        if (!item.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("Cart item does not belong to user");
+        if (!removed) {
+            throw new ResourceNotFoundException("Item not found in cart");
         }
-        
-        cartItemRepository.delete(item);
-        
-        return convertToCartResponse(cartRepository.findById(cart.getId()).orElse(cart));
+
+        cart.setUpdatedAt(LocalDateTime.now());
+        Cart savedCart = cartRepository.save(cart);
+        return mapToCartResponse(savedCart);
     }
-    
-    public CartResponse getCart(Long userId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElse(new Cart(null, userId, new ArrayList<>(), null, null));
-        
-        return convertToCartResponse(cart);
+
+    public void clearCart(String cartId, String buyerEmail) {
+        Cart cart = cartRepository.findByCartIdOrBuyerEmail(cartId, buyerEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
+        cart.getItems().clear();
+        cart.setUpdatedAt(LocalDateTime.now());
+        cartRepository.save(cart);
     }
-    
-    public void clearCart(Long userId) {
-        cartRepository.deleteByUserId(userId);
-    }
-    
-    // ORDER OPERATIONS
-    public OrderResponse checkout(Long userId, CheckoutRequest request) {
-        // Get user cart
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart is empty"));
-        
+
+    public OrderResponse checkout(String cartId, String buyerEmail, CheckoutRequest request) {
+        if (buyerEmail == null) {
+            throw new BusinessException("Guest checkout not supported. Please login to proceed.");
+        }
+
+        Cart cart = cartRepository.findByCartIdOrBuyerEmail(cartId, buyerEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+            throw new BusinessException("Cannot checkout empty cart");
         }
-        
-        // Validate all products are still available
+
+        // Validate all items and calculate total
+        BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem item : cart.getItems()) {
-            if (productServiceClient.checkProductAvailability(item.getProductId(), item.getQuantity())) {
-                throw new RuntimeException("Product " + " is no longer available in requested quantity");
-            }
+            ProductResponseDto product = productServiceClient.getProduct(item.getProductId());
+            validateProductAvailability(product, item.getQuantity());
+            subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
-        
-        // Create order
-        Order order = new Order();
-        order.setOrderNumber(generateOrderNumber());
-        order.setUserId(userId);
-//        order.setTotalAmount(cart.getTotalAmount());
-        
-        // Set delivery info
-        DeliveryInfo deliveryInfo = new DeliveryInfo();
-        deliveryInfo.setMethod(request.getDeliveryMethod());
-        
-        if (request.getDeliveryMethod() == DeliveryMethod.HOME_DELIVERY) {
-            deliveryInfo.setAddress(request.getAddress());
-        } else {
-            deliveryInfo.setShopLocation(request.getShopLocation());
-            deliveryInfo.setPickupTime(request.getPickupTime());
-        }
-        
-        order.setDeliveryInfo(deliveryInfo);
-        order.setGrandTotal(order.getTotalAmount().add(order.getDeliveryFee()));
-        
-        // Save order
-        order = orderRepository.save(order);
-        
-        // Create order items
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItem cartItem : cart.getItems()) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setProductId(cartItem.getProductId());
-            orderItem.setQuantity(cartItem.getQuantity());
-//            orderItem.setUnitPrice(cartItem.getUnitPrice());
-//            orderItem.setProductName(cartItem.getProductName());
-//            orderItem.setProductImage(cartItem.getProductImage());
-//
-            orderItems.add(orderItem);
-        }
-        
-        orderItemRepository.saveAll(orderItems);
-        order.setItems(orderItems);
-        
-        // Update product stock
+
+        // Process each item and update stock
         for (CartItem item : cart.getItems()) {
+            ProductResponseDto product = productServiceClient.getProduct(item.getProductId());
+            validateProductAvailability(product, item.getQuantity());
+
+            // Reduce stock by purchased quantity (negative quantity change)
             productServiceClient.updateProductStock(item.getProductId(), -item.getQuantity());
         }
+
+        // Create order
+        Order order = new Order();
+        order.setBuyerEmail(buyerEmail);
+        order.setOrderNumber(generateOrderNumber());
+        order.setStatus(OrderStatus.PENDING);
         
-        // Clear cart
-        clearCart(userId);
+        DeliveryInfo deliveryInfo = new DeliveryInfo();
+        deliveryInfo.setMethod(request.getDeliveryMethod());
+        deliveryInfo.setAddress(request.getAddress());
+        order.setDeliveryInfo(deliveryInfo);
         
-        // Update order status
-        order.setStatus(OrderStatus.CONFIRMED);
-        orderRepository.save(order);
-        
-        return convertToOrderResponse(order);
+        order.setTotalAmount(subtotal);
+        order.setDeliveryFee(calculateDeliveryFee(request.getDeliveryMethod()));
+        order.setGrandTotal(order.getTotalAmount().add(order.getDeliveryFee()));
+
+        // Convert cart items to order items
+        List<OrderItem> orderItems = cart.getItems().stream()
+            .map(cartItem -> {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setProductId(cartItem.getProductId());
+                orderItem.setProductName(cartItem.getName());
+                orderItem.setUnitPrice(cartItem.getUnitPrice());
+                orderItem.setQuantity(cartItem.getQuantity());
+                orderItem.setProductImage(cartItem.getProductImage());
+                orderItem.setOrder(order);
+                return orderItem;
+            })
+            .collect(Collectors.toList());
+
+        order.setItems(orderItems);
+        order.setCreatedAt(LocalDateTime.now());
+
+        // Save order and clear cart
+        Order savedOrder = orderRepository.save(order);
+        eventPublisher.sendCreateMessage(order);
+        cart.getItems().clear();
+        cartRepository.save(cart);
+
+        return mapToOrderResponse(savedOrder);
     }
-    
-    public List<OrderResponse> getUserOrders(Long userId) {
-        List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+    public List<OrderResponse> getUserOrders(String buyerEmail) {
+        List<Order> orders = orderRepository.findByBuyerEmailOrderByCreatedAtDesc(buyerEmail);
         return orders.stream()
-                .map(this::convertToOrderResponse)
-                .collect(Collectors.toList());
+            .map(this::mapToOrderResponse)
+            .collect(Collectors.toList());
     }
-    
-    public OrderResponse getOrder(Long userId, String orderNumber) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
-        
-        if (!order.getUserId().equals(userId)) {
-            throw new RuntimeException("Order does not belong to user");
-        }
-        
-        return convertToOrderResponse(order);
+
+    public OrderResponse getOrder(String orderNumber, String buyerEmail) {
+        Order order = orderRepository.findByOrderNumberAndBuyerEmail(orderNumber, buyerEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        return mapToOrderResponse(order);
     }
-    
+
     public OrderResponse updateOrderStatus(String orderNumber, OrderStatus status) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
-        
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
         order.setStatus(status);
-        orderRepository.save(order);
-        
-        return convertToOrderResponse(order);
+        order.setUpdatedAt(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+        return mapToOrderResponse(savedOrder);
     }
-    
-    // HELPER METHODS
-    private String generateOrderNumber() {
-        return "ORD" + System.currentTimeMillis() + String.format("%03d", new Random().nextInt(1000));
-    }
-    
-    private BigDecimal calculateDeliveryFee(String city) {
-        // Implement your delivery fee calculation logic
-        // This is a simple example
-        if ("Lagos".equalsIgnoreCase(city)) {
-            return new BigDecimal("500.00");
+
+    private Cart getOrCreateCart(String cartId, String buyerEmail) {
+        Optional<Cart> cartOptional = buyerEmail != null 
+            ? cartRepository.findByBuyerEmail(buyerEmail)
+            : cartRepository.findByCartId(cartId);
+
+        if (cartOptional.isPresent()) {
+            return cartOptional.get();
+        }
+
+        Cart cart = new Cart();
+        if (buyerEmail != null) {
+            cart.setBuyerEmail(buyerEmail);
         } else {
-            return new BigDecimal("1000.00");
+            cart.setCartId(cartId != null ? cartId : UUID.randomUUID().toString());
+        }
+        cart.setCreatedAt(LocalDateTime.now());
+        return cartRepository.save(cart);
+    }
+
+    private void validateProductAvailability(ProductResponseDto product, int quantity) {
+        if (product == null) {
+            throw new ResourceNotFoundException("Product not found");
+        }
+        if (!productServiceClient.checkProductAvailability(product.getId(), quantity)) {
+            throw new BusinessException("Product " + product.getName() + " is not available in requested quantity");
         }
     }
-    
-    private CartResponse convertToCartResponse(Cart cart) {
-        List<CartItemResponse> itemResponses = cart.getItems().stream()
-                .map(this::convertToCartItemResponse)
-                .collect(Collectors.toList());
+
+    private BigDecimal calculateDeliveryFee(String deliveryMethod) {
+        return "delivery".equalsIgnoreCase(deliveryMethod) 
+            ? BigDecimal.valueOf(2000) // NGN 2000 delivery fee
+            : BigDecimal.ZERO;
+    }
+
+    private String generateOrderNumber() {
+        return "ORD-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 4);
+    }
+
+    private CartResponse mapToCartResponse(Cart cart) {
+        CartResponse response = new CartResponse();
+        response.setCartId(cart.getCartId());
+        response.setItems(cart.getItems().stream()
+            .map(this::mapToCartItemDto)
+            .collect(Collectors.toList()));
         
-        return CartResponse.builder()
-                .id(cart.getId())
-                .userId(cart.getUserId())
-                .items(itemResponses)
-//                .totalAmount(cart.getTotalAmount())
-                .totalItems(cart.getItems().stream().mapToInt(CartItem::getQuantity).sum())
-                .createdAt(cart.getCreatedAt())
-                .updatedAt(cart.getUpdatedAt())
-                .build();
-    }
-    
-    private CartItemResponse convertToCartItemResponse(CartItem item) {
-        return CartItemResponse.builder()
-                .id(item.getId())
-                .productId(item.getProductId())
-//                .productName(item.getProductName())
-//                .productImage(item.getProductImage())
-                .quantity(item.getQuantity())
-//                .unitPrice(item.getUnitPrice())
-//                .totalPrice(item.getTotalPrice())
-                .build();
-    }
-    
-    private OrderResponse convertToOrderResponse(Order order) {
-        List<OrderItemResponse> itemResponses = order.getItems().stream()
-                .map(this::convertToOrderItemResponse)
-                .collect(Collectors.toList());
+        BigDecimal totalPrice = cart.getItems().stream()
+            .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        return OrderResponse.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .userId(order.getUserId())
-                .items(itemResponses)
-                .deliveryInfo(order.getDeliveryInfo())
-                .totalAmount(order.getTotalAmount())
-                .deliveryFee(order.getDeliveryFee())
-                .grandTotal(order.getGrandTotal())
-                .status(order.getStatus())
-                .createdAt(order.getCreatedAt())
-                .build();
+        int totalItems = cart.getItems().stream()
+            .mapToInt(CartItem::getQuantity)
+            .sum();
+        
+        response.setTotalAmount(totalPrice);
+        response.setTotalItems(totalItems);
+        return response;
     }
-    
-    private OrderItemResponse convertToOrderItemResponse(OrderItem item) {
-        return OrderItemResponse.builder()
-                .id(item.getId())
-                .productId(item.getProductId())
-//                .productName(item.getProductName())
-//                .productImage(item.getProductImage())
-                .quantity(item.getQuantity())
-//                .unitPrice(item.getUnitPrice())
-//                .totalPrice(item.getTotalPrice())
-                .build();
+
+    private CartItemDto mapToCartItemDto(CartItem item) {
+        CartItemDto dto = new CartItemDto();
+        dto.setProductId(item.getProductId());
+        dto.setName(item.getName());
+        dto.setPrice(item.getUnitPrice());
+        dto.setQuantity(item.getQuantity());
+        dto.setImageUrl(item.getProductImage());
+        return dto;
+    }
+
+    private OrderResponse mapToOrderResponse(Order order) {
+        OrderResponse response = new OrderResponse();
+        response.setId(order.getId());
+        response.setOrderNumber(order.getOrderNumber());
+        response.setStatus(order.getStatus());
+        response.setDeliveryInfo(order.getDeliveryInfo());
+        response.setDeliveryFee(order.getDeliveryFee());
+        response.setTotalAmount(order.getTotalAmount());
+        response.setGrandTotal(order.getGrandTotal());
+        response.setCreatedAt(order.getCreatedAt());
+
+        response.setItems(order.getItems().stream()
+            .map(this::mapToOrderItemDto)
+            .collect(Collectors.toList()));
+        
+        return response;
+    }
+
+    private OrderItemDto mapToOrderItemDto(OrderItem item) {
+        OrderItemDto dto = new OrderItemDto();
+        dto.setProductId(item.getProductId());
+        dto.setName(item.getProductName());
+        dto.setUnitPrice(item.getUnitPrice());
+        dto.setQuantity(item.getQuantity());
+        dto.setProductImage(item.getProductImage());
+        return dto;
     }
 }

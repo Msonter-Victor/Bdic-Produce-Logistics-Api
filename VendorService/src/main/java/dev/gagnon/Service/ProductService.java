@@ -20,11 +20,17 @@ public interface ProductService {
             MultipartFile sideImage4
     );
 
-    ApiResponse2<ProductResponseDto> getProductById(Long id);
+    ProductResponseDto getProductById(Long id);
 
     ApiResponse2<List<ProductResponseDto>> getAllProducts();
 
     ApiResponse<ProductDto> updateProduct(Long id, ProductDto dto);
 
     ApiResponse<Void> deleteProduct(Long id);
+
+    boolean checkProductAvailability(Long id, Integer quantity);
+
+    ApiResponse<Void> updateProductStock(Long id, Integer quantity);
+
+    ApiResponse<Void> updateProductQuantity(Long id, Integer quantity);
 }

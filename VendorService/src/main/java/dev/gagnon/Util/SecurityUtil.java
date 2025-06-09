@@ -1,8 +1,15 @@
 package dev.gagnon.Util;
 
 
+import com.cloudinary.Uploader;
+import com.cloudinary.utils.ObjectUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
+
 
 public class SecurityUtil {
 
@@ -27,4 +34,6 @@ public class SecurityUtil {
 
         throw new RuntimeException("Unable to extract user ID");
     }
+
+
 }
