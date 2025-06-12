@@ -1,4 +1,4 @@
-package dev.gagnon.model;
+package dev.gagnon.Model;
 
 public enum Status {
 

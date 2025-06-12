@@ -1,6 +1,10 @@
 spring:
   profiles:
+<<<<<<< HEAD
     active: prod
 
 
 
+=======
+    active: dev
+>>>>>>> dev

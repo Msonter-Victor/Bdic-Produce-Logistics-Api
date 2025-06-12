@@ -1,10 +1,14 @@
 package dev.gagnon.controller;
 
+<<<<<<< HEAD
 import dev.gagnon.dto.ChatMessageRequest;
 import dev.gagnon.dto.ChatMessageResponse;
 import dev.gagnon.model.ChatMessage;
 import dev.gagnon.service.ChatService;
 import lombok.RequiredArgsConstructor;
+=======
+import dev.gagnon.Model.ChatMessage;
+>>>>>>> dev
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;

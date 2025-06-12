@@ -1,4 +1,4 @@
-package dev.gagnon.service;
+package dev.gagnon.Service;
 
 import dev.gagnon.dto.response.CreateUserEvent;
 import jakarta.mail.MessagingException;

@@ -1,9 +1,13 @@
 package dev.gagnon.Controller;
 
+<<<<<<< HEAD
 import dev.gagnon.DTO.AuthRequest;
 import dev.gagnon.DTO.AuthResponse;
 import dev.gagnon.DTO.ForgotPasswordRequest;
 import dev.gagnon.DTO.ResetPasswordRequest;
+=======
+import dev.gagnon.DTO.*;
+>>>>>>> dev
 import dev.gagnon.Model.User;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.JwtService;
@@ -92,10 +96,35 @@ public class AuthController {
         return userService.handleForgotPassword(request.getEmail());
     }
 
+<<<<<<< HEAD
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         userService.resetPassword(request);
         return ResponseEntity.ok("Password has been reset successfully.");
     }
+=======
+//    @PostMapping("/reset-password")
+//    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+//        userService.resetPassword(request);
+//        return ResponseEntity.ok("Password has been reset successfully.");
+//    }
+@PostMapping("/reset-password")
+public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+    userService.resetPassword(request);
+    return ResponseEntity.ok(new CustomResponse<>(true, "Password has been reset successfully.", null));
+}
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userService.findByEmail(userDetails.getUsername());
+
+        return ResponseEntity.ok(Map.of(
+                "firstName", user.getSurname(),
+                "lastName", user.getOtherName(),
+                "email", user.getEmail()
+        ));
+    }
+
+>>>>>>> dev
 }
 

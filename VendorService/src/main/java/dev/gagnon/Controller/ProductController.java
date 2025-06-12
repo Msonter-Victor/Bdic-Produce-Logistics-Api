@@ -1,9 +1,8 @@
 package dev.gagnon.Controller;
 
-import dev.gagnon.DTO.ApiResponse;
-import dev.gagnon.DTO.ApiResponse2;
-import dev.gagnon.DTO.ProductDto;
-import dev.gagnon.DTO.ProductResponseDto;
+import dev.gagnon.DTO.*;
+import dev.gagnon.Model.Product;
+import dev.gagnon.Repository.ProductRepository;
 import dev.gagnon.Service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,8 @@ import java.util.Map;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductRepository productRepository;
+    //private final ProductMapper productMapper;
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProductDto>> createProduct(
@@ -42,12 +45,19 @@ public class ProductController {
                 .body(response);
     }
 
+    @PostMapping("/all/search")
+    public ResponseEntity<ApiResponse2<List<ProductSearchResponseDTO>>> searchProducts(@RequestBody ProductSearchRequest request) {
+        ApiResponse2<List<ProductSearchResponseDTO>> result = productService.searchProducts(request);
+        return ResponseEntity.ok(result);
+    }
+
+
+
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDto> getById(@PathVariable Long id) {
         ProductResponseDto response = productService.getProductById(id);
         return ResponseEntity.ok().body(response);
     }
-
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse2<List<ProductResponseDto>>> getAll() {
@@ -72,27 +82,30 @@ public class ProductController {
                 .status(response.isSuccess() ? 200 : 404)
                 .body(response);
     }
-
+//
     @GetMapping("/product/image/{filename:.+}")
     public ResponseEntity<?> getProductImage(@PathVariable String filename) {
         try {
-            // Make sure this matches the actual path where your files are saved
-            String uploadDir = "/var/www/bdic_virtual_market_BackEnd/uploads/";
-            File imageFile = new File(uploadDir + filename);
-            if (!imageFile.exists()) {
+            // Safer: Construct path using Paths API
+            Path imagePath = Paths.get(System.getProperty("user.dir"), "uploads", filename);
+
+            if (!Files.exists(imagePath)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Image not found");
             }
-            String contentType = Files.probeContentType(imageFile.toPath());
+
+            String contentType = Files.probeContentType(imagePath);
             return ResponseEntity.ok()
-                    .header("Content-Disposition", "inline; filename=\"" + imageFile.getName() + "\"")
+                    .header("Content-Disposition", "inline; filename=\"" + filename + "\"")
                     .contentType(contentType != null ? MediaType.parseMediaType(contentType) : MediaType.APPLICATION_OCTET_STREAM)
-                    .body(Files.readAllBytes(imageFile.toPath()));
+                    .body(Files.readAllBytes(imagePath));
+
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error loading image: " + e.getMessage());
         }
     }
 
+<<<<<<< HEAD
     @GetMapping("/{id}/availability")
     public ResponseEntity<Boolean> checkAvailability(
             @PathVariable Long id,
@@ -124,3 +137,6 @@ public class ProductController {
     }
 
 }
+=======
+   }
+>>>>>>> dev

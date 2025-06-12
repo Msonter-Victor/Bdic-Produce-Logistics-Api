@@ -12,179 +12,44 @@ spring:
         locator:
           enabled: true  # Enable discovery-based routing
           lower-case-service-id: true
+
       routes:
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/orders/**,/api/cart/**
+
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payments/**
+
+        - id: chat-service
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/ws/**
+
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/users/**
+            - Path=/api/users/**,/api/auth/**,/api/roles/**
 
-        - id: user-auth-login
-          uri: lb://USER-SERVICE
+        - id: vendor-service
+          uri: lb://VENDOR-SERVICE
           predicates:
-            - Path=/api/auth/login
+            - Path=/api/council-wards/**,/api/local-governments/**,/api/markets/**,/api/market-sections/**,/api/states/**,/api/statuses/**,/api/shops/**,/api/categories/**,/api/products/**
 
-        - id: auth-service
-          uri: lb://AUTH-SERVICE
-          predicates:
-            - Path=/api/auth2/**
 
-        - id: dashboard
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/dashboard-redirect
-
-        - id: user-service-register
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/users/register
-
-        - id: user-service-verify
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/users/verify
-
-        - id: user-service-test-email
-          uri: lb://USER-SERVICE
-          predicates:
-           - Path=/api/auth/test-email
-
-        - id: user-service-auth-wildcard
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/auth/reset-password
-
-        - id: user-service-add-roles
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/roles/AddRoles
-
-        #Role Management Route
-        - id: dashboard-role
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/roles/allRoles
-
-        # Role-based Routes
-        - id: forgot-service
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/auth/forgot-password
-
-        - id: add-roleUpdate
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/users/add-role
-        #Add Status
-        - id: view_add_status
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/addStatus
-
-        - id: buyer-service
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/buyer/**
-        #view all status
-        - id: view_all_status
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/viewAllStatus
-
-        #View all status
-        - id: view_single_status
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/get/{id}
-      #  update status
-        - id: update_status
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/update/{id}
-      # delete status
-        - id: delete_status
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/statuses/delete/{id}
-        # Add new Market
-        - id: add_market
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/add
-        # View Single  Market
-        - id: update_Market
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/{id}
-        # Delete Markets
-        - id: delete_market
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/delete/{id}
-        # view all Market
-        - id: view_all_markets
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/all
-        # Update Market
-        - id: update_markets
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/markets/update/{id}
-        #/api/market-sections
-        - id: view_market-sections
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/market-sections/all
-        #/api/market-sections
-        - id: update_market-sections
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/market-sections/update/{id}
-        #/api/market-sections
-        - id: add_market-sections
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/market-sections/add
-        # add shops
-        - id: add_shops
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/shops/add
-        # view shops
-        - id: view_all_shops
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/shops/all
-        # update shop
-        - id: update-shop
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/shops/update/{id}
-          #STATES
-        - id: all-states in Nigeria
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/states/all
-        #LOCAL GOVERNMENT /api/local-governments/all
-        - id: all-LGA-in-Nigeria
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/local-governments/all
-        # COUNCIL WARDS /api/council-wards/all
-        - id: all-wards-in-Nigeria
-          uri: lb://VENDOR-SERVICE
-          predicates:
-            - Path=/api/council-wards/all
 eureka:
   client:
     hostname: localhost
-    #prefer-ip-address: true
     prefer-ip-address: true
     register-with-eureka: true
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
       #defaultZone: http://41.78.80.108:8761/eureka/
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

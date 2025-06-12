@@ -10,6 +10,7 @@ import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -205,5 +206,9 @@ public void resetPassword(ResetPasswordRequest dto) {
     userRepository.save(user);
 }
 
-
+    @Override
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
 }
