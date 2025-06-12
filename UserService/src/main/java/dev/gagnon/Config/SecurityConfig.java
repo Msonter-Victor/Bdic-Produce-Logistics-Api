@@ -56,6 +56,7 @@ public class SecurityConfig {
                        //.requestMatchers("/api/roles/**").hasAuthority("ADMIN") // protect the rest
                       .requestMatchers("/api/auth/reset-password").permitAll()
                         .requestMatchers("api/users/add-role").permitAll()
+                        .requestMatchers("api/users/update-role").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/vendor/**").hasAuthority("VENDOR")
                         .requestMatchers("/api/logistics/**").hasAuthority("LOGISTICS")

@@ -1,4 +1,4 @@
-package dev.gagnon.service;
+package dev.gagnon.Service;
 
 import dev.gagnon.config.MailConfig;
 import jakarta.mail.MessagingException;

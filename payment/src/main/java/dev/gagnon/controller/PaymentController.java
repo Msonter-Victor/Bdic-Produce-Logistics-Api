@@ -4,7 +4,7 @@ package dev.gagnon.controller;
 import dev.gagnon.dto.request.InitializePaymentRequest;
 import dev.gagnon.dto.response.InitializePaymentResponse;
 import dev.gagnon.dto.response.VerifyPaymentResponse;
-import dev.gagnon.service.PaymentService;
+import dev.gagnon.Service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

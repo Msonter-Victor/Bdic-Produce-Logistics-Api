@@ -1,8 +1,10 @@
 package dev.gagnon.Service;
 
 import dev.gagnon.DTO.ResetPasswordRequest;
+import dev.gagnon.Model.User;
 import org.springframework.http.ResponseEntity;
 import dev.gagnon.DTO.UserRegistrationRequest;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
@@ -18,5 +20,5 @@ public interface UserService {
     //void handleForgotPassword(String email);
     ResponseEntity<?> handleForgotPassword(String email);
 
-
+    User findByEmail(String email);
 }

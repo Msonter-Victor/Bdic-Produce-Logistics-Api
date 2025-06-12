@@ -1,6 +1,5 @@
-package dev.gagnon.model;
+package dev.gagnon.Model;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 

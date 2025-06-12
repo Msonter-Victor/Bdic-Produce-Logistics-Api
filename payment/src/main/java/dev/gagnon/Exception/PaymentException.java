@@ -1,4 +1,4 @@
-package dev.gagnon.execption;
+package dev.gagnon.Exception;
 
 public class PaymentException extends RuntimeException{
     public PaymentException(String message) {

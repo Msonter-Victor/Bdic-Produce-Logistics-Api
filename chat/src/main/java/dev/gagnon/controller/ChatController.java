@@ -1,6 +1,6 @@
 package dev.gagnon.controller;
 
-import dev.gagnon.model.ChatMessage;
+import dev.gagnon.Model.ChatMessage;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;

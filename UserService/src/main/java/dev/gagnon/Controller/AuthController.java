@@ -1,6 +1,7 @@
 package dev.gagnon.Controller;
 
 import dev.gagnon.DTO.*;
+import dev.gagnon.Model.User;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.JwtService;
 import dev.gagnon.Service.UserService;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -117,6 +119,17 @@ public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request
     userService.resetPassword(request);
     return ResponseEntity.ok(new CustomResponse<>(true, "Password has been reset successfully.", null));
 }
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userService.findByEmail(userDetails.getUsername());
+
+        return ResponseEntity.ok(Map.of(
+                "firstName", user.getSurname(),
+                "lastName", user.getOtherName(),
+                "email", user.getEmail()
+        ));
+    }
 
 }
 

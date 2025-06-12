@@ -1,10 +1,8 @@
 package dev.gagnon.Service;
 
 
-import dev.gagnon.DTO.ApiResponse;
-import dev.gagnon.DTO.ApiResponse2;
-import dev.gagnon.DTO.ProductDto;
-import dev.gagnon.DTO.ProductResponseDto;
+import dev.gagnon.DTO.*;
+import dev.gagnon.Model.Product;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -27,4 +25,13 @@ public interface ProductService {
     ApiResponse<ProductDto> updateProduct(Long id, ProductDto dto);
 
     ApiResponse<Void> deleteProduct(Long id);
+
+    //ApiResponse2<List<ProductResponseDto>> searchProducts(String categoryName, String shopName, String marketName);
+
+    //List<ProductSearchResponseDTO> searchProducts(ProductSearchRequest request);
+
+    // ProductService.java
+    ApiResponse2<List<ProductSearchResponseDTO>> searchProducts(ProductSearchRequest request);
+
+
 }

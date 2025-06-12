@@ -4,8 +4,8 @@
 //import org.springframework.http.ResponseEntity;
 //import org.springframework.web.bind.annotation.*;
 //
-//@RestControllerAdvice
-//public class GlobalExceptionHandler {
+//@////RestControllerAdvice
+//public class GlobalExceptionHandler22 {
 //
 //    @ExceptionHandler(ResourceNotFoundException.class)
 //    public ResponseEntity<String> handleNotFound(ResourceNotFoundException ex) {

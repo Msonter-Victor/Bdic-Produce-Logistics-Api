@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
-
 @Service
 @RequiredArgsConstructor
 public class ShopServiceImpl implements ShopService {
