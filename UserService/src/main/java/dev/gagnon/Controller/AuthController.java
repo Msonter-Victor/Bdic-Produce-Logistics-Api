@@ -54,8 +54,6 @@ public class AuthController {
             return ResponseEntity.ok(new AuthResponse(token, roles));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body("Invalid email or password");
-        } catch (DisabledException e) {
-            return ResponseEntity.status(403).body("Account not verified, Check your email to verify");
         }
     }
 
@@ -70,7 +68,6 @@ public class AuthController {
                 "email", user.getEmail()
         ));
     }
-
 
     @GetMapping("/test-email")
     public ResponseEntity<String> testEmail() {
@@ -98,4 +95,3 @@ public class AuthController {
         return ResponseEntity.ok("Password has been reset successfully.");
     }
 }
-

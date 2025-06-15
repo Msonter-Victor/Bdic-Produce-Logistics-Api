@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class CartItemDto {
     private Long productId;
+    private Long itemId;
     private String name;
     private BigDecimal price;
     private int quantity;

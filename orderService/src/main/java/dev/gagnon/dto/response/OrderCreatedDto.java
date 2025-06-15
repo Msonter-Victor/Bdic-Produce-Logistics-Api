@@ -1,9 +1,15 @@
-package dev.gagnon.model;
+package dev.gagnon.dto.response;
 
-import jakarta.persistence.*;
+import dev.gagnon.model.DeliveryInfo;
+import dev.gagnon.model.OrderStatus;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.checkerframework.checker.units.qual.A;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,26 +18,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "_orders")
-@Data
-@NoArgsConstructor
+@Setter
+@Getter
 @AllArgsConstructor
-public class Order {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@NoArgsConstructor
+public class OrderCreatedDto {
     private Long id;
     private String orderNumber;
     private String buyerEmail;
-    @Embedded
     private DeliveryInfo deliveryInfo;
     private BigDecimal totalAmount;
-    private BigDecimal deliveryFee = BigDecimal.ZERO;
+    private BigDecimal deliveryFee;
     private BigDecimal grandTotal;
-    @Enumerated(EnumType.STRING)
-    private OrderStatus status = OrderStatus.PENDING;
-    @CreationTimestamp
+    private OrderStatus status;
     private LocalDateTime createdAt;
-    @UpdateTimestamp
     private LocalDateTime updatedAt;
+    private List<OrderItemDto> orderItemDtoList = new ArrayList<>();
 }

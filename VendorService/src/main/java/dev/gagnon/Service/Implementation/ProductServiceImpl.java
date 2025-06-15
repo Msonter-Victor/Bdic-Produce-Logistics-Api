@@ -50,11 +50,11 @@ public class ProductServiceImpl implements ProductService {
                                                  MultipartFile sideImage3,
                                                  MultipartFile sideImage4) {
 
-//        Shop shop = shopRepo.findById(dto.getShopId()).orElse(null);
-//        Category category = categoryRepo.findById(dto.getCategoryId()).orElse(null);
-//        if (shop == null || category == null) {
-//            return new ApiResponse<>(false, "Invalid shop or category", null);
-//        }
+        Shop shop = shopRepo.findById(dto.getShopId()).orElse(null);
+        Category category = categoryRepo.findById(dto.getCategoryId()).orElse(null);
+        if (shop == null || category == null) {
+            return new ApiResponse<>(false, "Invalid shop or category", null);
+        }
         // Upload images and get URLs
         String mainImageUrl = getMediaUrl(mainImage, cloudinary.uploader());
         String sideImage1Url = getMediaUrl(sideImage1, cloudinary.uploader());
@@ -72,8 +72,8 @@ public class ProductServiceImpl implements ProductService {
                 .sideImage2Url(sideImage2Url)
                 .sideImage3Url(sideImage3Url)
                 .sideImage4Url(sideImage4Url)
-//                .shop(shop)
-//                .category(category)
+                .shop(shop)
+                .category(category)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -171,6 +171,12 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
+    @Override
+    public String deleteAllProducts() {
+        productRepo.deleteAll();
+        return "successfully deleted products";
+    }
+
     //    private String saveImage(MultipartFile file) {
 //        if (file == null || file.isEmpty()) return null;
 //
@@ -234,7 +240,6 @@ public class ProductServiceImpl implements ProductService {
 
    //String BASE_URL = "C:/Users/BDIC/IdeaProjects/Bdic-Produce-Logistics-Api";
 
-    String BASE_URL = "https://api.digitalmarke.bdic.ng";
     private ProductResponseDto mapToDto4SingleProduct(Product product) {
         ProductResponseDto dto = new ProductResponseDto();
 
@@ -245,11 +250,11 @@ public class ProductServiceImpl implements ProductService {
         dto.setQuantity(product.getQuantity());
 
         // Set image URLs
-        dto.setMainImageUrl(BASE_URL + product.getMainImageUrl());
-        dto.setSideImage1Url(BASE_URL + product.getSideImage1Url());
-        dto.setSideImage2Url(BASE_URL + product.getSideImage2Url());
-        dto.setSideImage3Url(BASE_URL + product.getSideImage3Url());
-        dto.setSideImage4Url(BASE_URL + product.getSideImage4Url());
+        dto.setMainImageUrl(product.getMainImageUrl());
+        dto.setSideImage1Url(product.getSideImage1Url());
+        dto.setSideImage2Url(product.getSideImage2Url());
+        dto.setSideImage3Url(product.getSideImage3Url());
+        dto.setSideImage4Url(product.getSideImage4Url());
 
         // Set shop info
         dto.setShopId(product.getShop().getId());

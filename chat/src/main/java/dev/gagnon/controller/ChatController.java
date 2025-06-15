@@ -1,52 +1,57 @@
 package dev.gagnon.controller;
 
-import dev.gagnon.dto.ChatMessageRequest;
-import dev.gagnon.dto.ChatMessageResponse;
 import dev.gagnon.model.ChatMessage;
-import dev.gagnon.service.ChatService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import dev.gagnon.repository.ChatMessageRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
-@RequiredArgsConstructor
 public class ChatController {
 
-    private final ChatService chatService;
-    private final SimpMessageSendingOperations messagingTemplate;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private ChatMessageRepository chatRepo;
+
+    // Handle incoming message (STOMP)
     @MessageMapping("/chat.send")
-    public void sendMessage(@Payload ChatMessageRequest request) {
-        ChatMessage savedMessage = chatService.saveMessage(request);
-        ChatMessageResponse response = ChatMessageResponse.fromEntity(savedMessage);
-        
-        // Send to both participants
-        messagingTemplate.convertAndSendToUser(
-            request.getRecipientUsername(), 
-            "/queue/messages", 
-            response
-        );
-        messagingTemplate.convertAndSendToUser(
-            request.getSenderUsername(), 
-            "/queue/messages", 
-            response
-        );
-        
-        // Also send to the specific chat room
+    public void sendMessage(@Payload ChatMessage chatMessage) {
+        // Set timestamp and persist
+        chatMessage.setTimestamp(LocalDateTime.now());
+        chatRepo.save(chatMessage);
+        // Send to recipient topic
         messagingTemplate.convertAndSend(
-            "/topic/chat." + generateChatId(request.getSenderUsername(), request.getRecipientUsername()),
-            response
+            "/topic/messages." + chatMessage.getRecipientId(),
+            chatMessage
         );
     }
 
-    private String generateChatId(String user1, String user2) {
-        return Stream.of(user1, user2)
-                   .sorted()
-                   .collect(Collectors.joining("_"));
+    // REST: fetch previous messages between currentUser and selectedUser
+    @GetMapping("/api/messages/history")
+    @ResponseBody
+    public ResponseEntity<List<ChatMessage>> getChatHistory(
+            @RequestParam String user1,
+            @RequestParam String user2)
+    {
+        List<ChatMessage> history = chatRepo
+            .findBySenderIdAndRecipientIdOrSenderIdAndRecipientIdOrderByTimestamp(
+                user1, user2, user2, user1
+            );
+        // Optionally sort ascending by timestamp (or reverse here)
+        return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/allchats")
+    public ResponseEntity<?>getAllChats() {
+        List<ChatMessage> chats = chatRepo.findAll();
+        return ResponseEntity.ok(chats);
     }
 }

@@ -9,9 +9,11 @@ import dev.gagnon.exception.BusinessException;
 import dev.gagnon.exception.ResourceNotFoundException;
 import dev.gagnon.model.*;
 import dev.gagnon.repository.CartRepository;
+import dev.gagnon.repository.OrderItemRepository;
 import dev.gagnon.repository.OrderRepository;
 import dev.gagnon.utils.EventPublisherAdapter;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +30,12 @@ import java.util.stream.Collectors;
 public class OrderService {
     private static final int MAX_CART_ITEMS = 20;
     private final EventPublisherAdapter eventPublisher;
+    private final OrderItemRepository orderItemRepository;
     
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final ProductServiceClient productServiceClient;
+    private final ModelMapper modelMapper;
 
     public CartResponse addToCart(String cartId, String buyerEmail, AddToCartRequest request) {
         ProductResponseDto product = productServiceClient.getProduct(request.getProductId());
@@ -134,77 +138,94 @@ public class OrderService {
         cart.setUpdatedAt(LocalDateTime.now());
         cartRepository.save(cart);
     }
-
-    public OrderResponse checkout(String cartId, String buyerEmail, CheckoutRequest request) {
-        if (buyerEmail == null) {
-            throw new BusinessException("Guest checkout not supported. Please login to proceed.");
-        }
-
-        Cart cart = cartRepository.findByCartIdOrBuyerEmail(cartId, buyerEmail)
-            .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+    public OrderResponse checkout(String cartId, CheckoutRequest request) {
+        Cart cart = cartRepository.findByCartIdOrBuyerEmail(cartId, request.getBuyerEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
 
         if (cart.getItems().isEmpty()) {
             throw new BusinessException("Cannot checkout empty cart");
         }
 
         // Validate all items and calculate total
-        BigDecimal subtotal = BigDecimal.ZERO;
-        for (CartItem item : cart.getItems()) {
-            ProductResponseDto product = productServiceClient.getProduct(item.getProductId());
-            validateProductAvailability(product, item.getQuantity());
-            subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-        }
-
-        // Process each item and update stock
-        for (CartItem item : cart.getItems()) {
-            ProductResponseDto product = productServiceClient.getProduct(item.getProductId());
-            validateProductAvailability(product, item.getQuantity());
-
-            // Reduce stock by purchased quantity (negative quantity change)
-            productServiceClient.updateProductStock(item.getProductId(), -item.getQuantity());
-        }
+        BigDecimal subtotal = calculateSubtotal(cart);
 
         // Create order
-        Order order = new Order();
-        order.setBuyerEmail(buyerEmail);
-        order.setOrderNumber(generateOrderNumber());
-        order.setStatus(OrderStatus.PENDING);
-        
-        DeliveryInfo deliveryInfo = new DeliveryInfo();
-        deliveryInfo.setMethod(request.getDeliveryMethod());
-        deliveryInfo.setAddress(request.getAddress());
-        order.setDeliveryInfo(deliveryInfo);
-        
-        order.setTotalAmount(subtotal);
-        order.setDeliveryFee(calculateDeliveryFee(request.getDeliveryMethod()));
-        order.setGrandTotal(order.getTotalAmount().add(order.getDeliveryFee()));
+        Order order = createOrder(request, subtotal);
+        Order savedOrder = orderRepository.save(order); // Persist order first to generate ID
 
-        // Convert cart items to order items
-        List<OrderItem> orderItems = cart.getItems().stream()
-            .map(cartItem -> {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setProductId(cartItem.getProductId());
-                orderItem.setProductName(cartItem.getName());
-                orderItem.setUnitPrice(cartItem.getUnitPrice());
-                orderItem.setQuantity(cartItem.getQuantity());
-                orderItem.setProductImage(cartItem.getProductImage());
-                orderItem.setOrder(order);
-                return orderItem;
-            })
-            .collect(Collectors.toList());
+        // Create and save order items
+        createOrderItems(cart, savedOrder);
 
-        order.setItems(orderItems);
-        order.setCreatedAt(LocalDateTime.now());
+        // Process inventory updates
+        updateInventory(cart);
 
-        // Save order and clear cart
-        Order savedOrder = orderRepository.save(order);
-        eventPublisher.sendCreateMessage(order);
+        // Clear cart
         cart.getItems().clear();
         cartRepository.save(cart);
+        OrderCreatedDto orderCreatedDto = modelMapper.map(savedOrder, OrderCreatedDto.class);
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(savedOrder.getId());
+        List<OrderItemDto> orderItemDtoList = orderItems.stream()
+                        .map(OrderItemDto::new)
+                                .collect(Collectors.toList());
+        orderCreatedDto.setOrderItemDtoList(orderItemDtoList);
+        eventPublisher.sendCreateMessage(orderCreatedDto);
+
 
         return mapToOrderResponse(savedOrder);
     }
 
+    private BigDecimal calculateSubtotal(Cart cart) {
+        return cart.getItems().stream()
+                .map(item -> {
+                    ProductResponseDto product = productServiceClient.getProduct(item.getProductId());
+                    validateProductAvailability(product, item.getQuantity());
+                    return item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private Order createOrder(CheckoutRequest request, BigDecimal subtotal) {
+        Order order = new Order();
+        order.setBuyerEmail(request.getBuyerEmail());
+        order.setOrderNumber(generateOrderNumber());
+        order.setStatus(OrderStatus.PENDING);
+
+        DeliveryInfo deliveryInfo = new DeliveryInfo();
+        deliveryInfo.setMethod(request.getDeliveryMethod());
+        deliveryInfo.setAddress(request.getAddress());
+        order.setDeliveryInfo(deliveryInfo);
+
+        order.setTotalAmount(subtotal);
+        order.setDeliveryFee(calculateDeliveryFee(request.getDeliveryMethod()));
+        order.setGrandTotal(order.getTotalAmount().add(order.getDeliveryFee()));
+
+        return order;
+    }
+
+    private void createOrderItems(Cart cart, Order order) {
+        List<OrderItem> orderItems = cart.getItems().stream()
+                .map(cartItem -> {
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setOrder(order); // Only set the parent reference
+                    orderItem.setProductId(cartItem.getProductId());
+                    orderItem.setProductName(cartItem.getName());
+                    orderItem.setUnitPrice(cartItem.getUnitPrice());
+                    orderItem.setQuantity(cartItem.getQuantity());
+                    orderItem.setProductImage(cartItem.getProductImage());
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
+        orderItemRepository.saveAll(orderItems); // Batch insert
+    }
+
+    private void updateInventory(Cart cart) {
+        cart.getItems().forEach(item -> {
+            productServiceClient.updateProductStock(
+                    item.getProductId(),
+                    -item.getQuantity()
+            );
+        });
+    }
     public List<OrderResponse> getUserOrders(String buyerEmail) {
         List<Order> orders = orderRepository.findByBuyerEmailOrderByCreatedAtDesc(buyerEmail);
         return orders.stream()
@@ -289,6 +310,7 @@ public class OrderService {
     private CartItemDto mapToCartItemDto(CartItem item) {
         CartItemDto dto = new CartItemDto();
         dto.setProductId(item.getProductId());
+        dto.setItemId(item.getId());
         dto.setName(item.getName());
         dto.setPrice(item.getUnitPrice());
         dto.setQuantity(item.getQuantity());
@@ -307,10 +329,11 @@ public class OrderService {
         response.setGrandTotal(order.getGrandTotal());
         response.setCreatedAt(order.getCreatedAt());
 
-        response.setItems(order.getItems().stream()
-            .map(this::mapToOrderItemDto)
-            .collect(Collectors.toList()));
-        
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+        List<OrderItemDto> orderItemDtoList = orderItems.stream()
+                .map(OrderItemDto::new)
+                .toList();
+        response.setItems(orderItemDtoList);
         return response;
     }
 

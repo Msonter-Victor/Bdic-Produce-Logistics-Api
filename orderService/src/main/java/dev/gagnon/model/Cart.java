@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "carts")
+@Table(name = "items_cart")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

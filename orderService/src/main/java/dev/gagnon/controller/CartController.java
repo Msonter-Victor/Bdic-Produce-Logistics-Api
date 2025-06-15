@@ -7,6 +7,7 @@ import dev.gagnon.dto.response.CartResponse;
 import dev.gagnon.dto.response.OrderResponse;
 import dev.gagnon.service.OrderService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,28 +16,33 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/cart")
+@Slf4j
 public class CartController {
 
     @Autowired
     private OrderService orderService;
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
             @RequestHeader(value = "X-Cart-Id", required = false) String cartId,
             @Valid @RequestBody AddToCartRequest request,
             Principal principal) {
         String buyerEmail = principal != null ? principal.getName() : null;
         CartResponse response = orderService.addToCart(cartId, buyerEmail, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header("X-Cart-Id", response.getCartId())
+                .body(response);
     }
 
     @GetMapping
     public ResponseEntity<CartResponse> getCart(
-            @RequestHeader("X-Cart-Id") String cartId,
+            @RequestHeader(value = "X-Cart-Id", required = false) String cartId,
             Principal principal) {
         String buyerEmail = principal != null ? principal.getName() : null;
         CartResponse response = orderService.getCart(cartId, buyerEmail);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header("X-Cart-Id", response.getCartId())
+                .body(response);
     }
 
     @PutMapping("/items/{itemId}")
@@ -72,10 +78,8 @@ public class CartController {
     @PostMapping("/checkout")
     public ResponseEntity<OrderResponse> checkout(
             @RequestHeader("X-Cart-Id") String cartId,
-            @Valid @RequestBody CheckoutRequest request,
-            Principal principal) {
-        String buyerEmail = principal != null ? principal.getName() : null;
-        OrderResponse response = orderService.checkout(cartId, buyerEmail, request);
+            @Valid @RequestBody CheckoutRequest request) {
+        OrderResponse response = orderService.checkout(cartId, request);
         return ResponseEntity.ok(response);
     }
 }

@@ -16,7 +16,6 @@ public class ProductDto {
     private MultipartFile sideImage2Url;
     private MultipartFile sideImage3Url;
     private MultipartFile sideImage4Url;
-//
-//    private Long shopId;
-//    private Long categoryId;
+    private Long shopId;
+    private Long categoryId;
 }

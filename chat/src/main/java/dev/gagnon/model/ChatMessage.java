@@ -1,31 +1,28 @@
 package dev.gagnon.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_messages")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Setter
+@Table(name = "chats")
 public class ChatMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(nullable = false)
-    private String senderUsername;
-    
-    @Column(nullable = false)
-    private String recipientUsername;
-    
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
-    
-    @Column(nullable = false)
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private String senderId, recipientId, content;
+    private LocalDateTime timestamp;
+
+    // getters, setters, no-args and all-args constructor
+    public ChatMessage() {}
+    public ChatMessage(String senderId, String recipientId, String content, LocalDateTime timestamp) {
+        this.senderId = senderId;
+        this.recipientId = recipientId;
+        this.content = content;
+        this.timestamp = timestamp;
+    }
 }

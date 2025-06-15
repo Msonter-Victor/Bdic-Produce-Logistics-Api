@@ -33,4 +33,6 @@ public interface ProductService {
     ApiResponse<Void> updateProductStock(Long id, Integer quantity);
 
     ApiResponse<Void> updateProductQuantity(Long id, Integer quantity);
+
+    String deleteAllProducts();
 }

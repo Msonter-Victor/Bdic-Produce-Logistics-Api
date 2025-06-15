@@ -9,11 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CheckoutRequest {
-    @NotBlank
+    private String buyerEmail;
     private String deliveryMethod; // "pickup" or "delivery"
-    
-    @NotBlank
     private String address;
-    
-    private String paymentMethod;
 }

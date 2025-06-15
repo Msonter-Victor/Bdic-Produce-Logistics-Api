@@ -48,6 +48,11 @@ public class ProductController {
         return ResponseEntity.ok().body(response);
     }
 
+    @DeleteMapping("/all")
+    public ResponseEntity<?> deleteAllProducts() {
+        String response = productService.deleteAllProducts();
+        return ResponseEntity.ok().body(response);
+    }
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse2<List<ProductResponseDto>>> getAll() {
