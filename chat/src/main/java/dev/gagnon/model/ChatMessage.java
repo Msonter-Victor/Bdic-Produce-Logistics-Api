@@ -1,4 +1,4 @@
-package dev.gagnon.model;
+package dev.gagnon.Model;
 
 import jakarta.persistence.*;
 import lombok.Getter;

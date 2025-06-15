@@ -174,7 +174,7 @@ public ResponseEntity<?> getAccessibleDashboards(@AuthenticationPrincipal Custom
 }
 //---------------------------------------------------------------------------------------
 
-@PostMapping("/add-role")
+@PostMapping("/update-role")
 public ResponseEntity<?> addRoleToAuthenticatedUser(@RequestBody Map<String, String> requestBody) {
     String roleName = requestBody.get("name");
 
@@ -199,6 +199,38 @@ public ResponseEntity<?> addRoleToAuthenticatedUser(@RequestBody Map<String, Str
 
     return ResponseEntity.ok("Role '" + roleName + "' added successfully.");
 }
+
+    @PostMapping("/add-role")
+    public ResponseEntity<?> addRoleToUser(@RequestBody Map<String, String> requestBody) {
+        String email = requestBody.get("email");
+        String roleName = requestBody.get("name");
+
+        if (email == null || roleName == null) {
+            return ResponseEntity.badRequest().body("Email and role name are required.");
+        }
+
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+
+        User user = optionalUser.get();
+
+        Role role = roleRepository.findByName(roleName.toUpperCase());
+        if (role == null) {
+            return ResponseEntity.badRequest().body("Role not found.");
+        }
+
+        if (user.getRoles().contains(role)) {
+            return ResponseEntity.ok("User already has the '" + roleName + "' role.");
+        }
+
+        user.getRoles().add(role);  // this auto-updates the user_role join table
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Role '" + roleName + "' added successfully for " + email + ".");
+    }
+
 //---------------------------------------------------------------------LOGIN
 //@CrossOrigin(origins = "https://marketplace.bdic.ng", allowCredentials = "true")
 @PostMapping("/login")
