@@ -19,10 +19,7 @@
         <module>VendorService</module>
         <module>chat</module>
         <module>orderService</module>
-<<<<<<< HEAD
         <module>logistics</module>
-=======
->>>>>>> dev
 
 
     </modules>

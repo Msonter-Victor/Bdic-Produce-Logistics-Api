@@ -1,5 +1,6 @@
 package dev.gagnon.controller;
 
+import dev.gagnon.model.ChatMessage;
 import dev.gagnon.repository.ChatMessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.*;

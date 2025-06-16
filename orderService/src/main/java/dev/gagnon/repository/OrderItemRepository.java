@@ -1,6 +1,6 @@
-package dev.gagnon.Repository;
+package dev.gagnon.repository;
 
-import dev.gagnon.Model.OrderItem;
+import dev.gagnon.model.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

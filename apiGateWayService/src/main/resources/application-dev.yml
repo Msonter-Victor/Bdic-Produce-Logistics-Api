@@ -14,18 +14,11 @@ spring:
           lower-case-service-id: true
 
       routes:
-<<<<<<< HEAD
         # Existing routes...
         - id: order-service
           uri: lb://ORDER-SERVICE
           predicates:
             - Path=/api/orders/**, /api/cart/**
-=======
-        - id: order-service
-          uri: lb://ORDER-SERVICE
-          predicates:
-            - Path=/api/orders/**,/api/cart/**
->>>>>>> dev
 
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
@@ -36,7 +29,6 @@ spring:
           predicates:
             - Path=/api/logistics/**
 
-<<<<<<< HEAD
         # WebSocket and HTTP routes for chat service
         - id: chat-ws
           uri: lb://CHAT-SERVICE
@@ -53,13 +45,6 @@ spring:
             - RewritePath=/api/chat/(?<segment>.*), /api/chat/$\{segment}
 
         # Other existing services...
-=======
-        - id: chat-service
-          uri: lb://CHAT-SERVICE
-          predicates:
-            - Path=/ws/**
-
->>>>>>> dev
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
@@ -70,10 +55,6 @@ spring:
           predicates:
             - Path=/api/council-wards/**,/api/local-governments/**,/api/markets/**,/api/market-sections/**,/api/states/**,/api/statuses/**,/api/shops/**,/api/categories/**,/api/products/**
 
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
 eureka:
   client:
     hostname: localhost

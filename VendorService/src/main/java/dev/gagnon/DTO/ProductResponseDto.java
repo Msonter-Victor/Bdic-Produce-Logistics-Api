@@ -9,7 +9,7 @@ public class ProductResponseDto {
     private Long id;
     private String name;
     private String description;
-    private BigDecimal price;
+    private double price;
     private Integer quantity;
 
     private String mainImageUrl;
@@ -23,15 +23,4 @@ public class ProductResponseDto {
 
     private Long categoryId;
     private String categoryName;
-
-    private String vendor;
-    private String market_section;
-    private String shop_address;
-    private String status;
-
-    // New fields for counts
-    private Long countByShop;
-    private Long countByShopAndCategory;
-    private Long countByCategory;
-
 }

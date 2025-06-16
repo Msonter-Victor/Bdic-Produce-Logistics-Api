@@ -1,12 +1,9 @@
 package dev.gagnon.Model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "market_sections")
@@ -25,12 +22,6 @@ public class MarketSection {
 
     private String name;
     private String description;
-
-
-    @OneToMany(mappedBy = "marketSection", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Shop> shops = new ArrayList<>();
-
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

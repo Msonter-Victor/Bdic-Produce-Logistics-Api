@@ -1,6 +1,6 @@
+package dev.gagnon.exception;
 
-package dev.gagnon.Exception;
-public class ResourceNotFoundException extends RuntimeException {
+public class ResourceNotFoundException extends OrderBaseException{
     public ResourceNotFoundException(String message) {
         super(message);
     }

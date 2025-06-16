@@ -48,7 +48,6 @@ public class SecurityConfig {
                         .requestMatchers("api/users/dashboard-redirect").authenticated()
                         .requestMatchers("/api/auth/reset-password").permitAll()
                         .requestMatchers("api/users/add-role").permitAll()
-                        .requestMatchers("api/users/update-role").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/vendor/**").hasAuthority("VENDOR")
                         .requestMatchers("/api/logistics/**").hasAuthority("LOGISTICS")
