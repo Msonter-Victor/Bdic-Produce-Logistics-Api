@@ -1,6 +1,9 @@
 package dev.gagnon.Controller;
 
-import dev.gagnon.DTO.*;
+import dev.gagnon.DTO.AuthRequest;
+import dev.gagnon.DTO.AuthResponse;
+import dev.gagnon.DTO.ForgotPasswordRequest;
+import dev.gagnon.DTO.ResetPasswordRequest;
 import dev.gagnon.Model.User;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.JwtService;
@@ -29,65 +32,42 @@ public class AuthController {
     private final JwtService jwtService;
     private final EmailService emailService;
     private final UserService userService;
+    
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            authRequest.getEmail(),
+                            authRequest.getPassword()
+                    )
+            );
 
-//
-//    @PostMapping("/login")
-//    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
-//        try {
-//            Authentication authentication = authenticationManager.authenticate(
-//                    new UsernamePasswordAuthenticationToken(
-//                            authRequest.getEmail(),
-//                            authRequest.getPassword()
-//                    )
-//            );
-//
-//            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-//
-//            List<String> roles = userDetails.getAuthorities().stream()
-//                    .map(auth -> auth.getAuthority())
-//                    .toList();
-//
-//            String token = jwtService.generateToken(userDetails, roles);
-//
-//            return ResponseEntity.ok(new AuthResponse(token, roles));
-//        } catch (BadCredentialsException e) {
-//            return ResponseEntity.status(401).body("Invalid email or password");
-//        } catch (DisabledException e) {
-//            return ResponseEntity.status(403).body("Account not verified, Check your email to verify");
-//        }
-//    }
-@PostMapping("/login")
-public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
-    try {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        authRequest.getEmail(),
-                        authRequest.getPassword()
-                )
-        );
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(auth -> auth.getAuthority())
+                    .toList();
 
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(auth -> auth.getAuthority())
-                .toList();
+            String token = jwtService.generateToken(userDetails, roles);
 
-        String token = jwtService.generateToken(userDetails, roles);
-
-        return ResponseEntity.ok(
-                new CustomResponse<>(true, "Login successful", new AuthResponse(token, roles))
-        );
-    } catch (BadCredentialsException e) {
-        return ResponseEntity.status(401).body(
-                new CustomResponse<>(false, "Invalid email or password", null)
-        );
-    } catch (DisabledException e) {
-        return ResponseEntity.status(403).body(
-                new CustomResponse<>(false, "Account not verified. Please check your email.", null)
-        );
+            return ResponseEntity.ok(new AuthResponse(token, roles));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(401).body("Invalid email or password");
+        }
     }
-}
 
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userService.findByEmail(userDetails.getUsername());
+
+        return ResponseEntity.ok(Map.of(
+                "firstName", user.getSurname(),
+                "lastName", user.getOtherName(),
+                "email", user.getEmail()
+        ));
+    }
 
     @GetMapping("/test-email")
     public ResponseEntity<String> testEmail() {
@@ -109,27 +89,9 @@ public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
         return userService.handleForgotPassword(request.getEmail());
     }
 
-//    @PostMapping("/reset-password")
-//    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-//        userService.resetPassword(request);
-//        return ResponseEntity.ok("Password has been reset successfully.");
-//    }
-@PostMapping("/reset-password")
-public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-    userService.resetPassword(request);
-    return ResponseEntity.ok(new CustomResponse<>(true, "Password has been reset successfully.", null));
-}
-    @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(Authentication authentication) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userService.findByEmail(userDetails.getUsername());
-
-        return ResponseEntity.ok(Map.of(
-                "firstName", user.getSurname(),
-                "lastName", user.getOtherName(),
-                "email", user.getEmail()
-        ));
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        userService.resetPassword(request);
+        return ResponseEntity.ok("Password has been reset successfully.");
     }
-
 }
-

@@ -58,9 +58,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/shops/**").permitAll()
                         .requestMatchers("/api/shops/update/{id}").permitAll()
 
-                        .requestMatchers("/api/states/all").permitAll()
-                        .requestMatchers("/api/local-governments/all").permitAll()
-                        .requestMatchers("/api/council-wards/all").permitAll()
+                        .requestMatchers("/api/states/**").permitAll()
+                        .requestMatchers("/api/local-governments/**").permitAll()
+                        .requestMatchers("/api/council-wards/**").permitAll()
 
                         //.requestMatchers("/api/categories/**").authenticated()
                         .requestMatchers("/api/categories/add").authenticated()

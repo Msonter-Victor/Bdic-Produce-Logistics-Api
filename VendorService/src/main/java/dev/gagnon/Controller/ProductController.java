@@ -1,8 +1,9 @@
 package dev.gagnon.Controller;
 
-import dev.gagnon.DTO.*;
-import dev.gagnon.Model.Product;
-import dev.gagnon.Repository.ProductRepository;
+import dev.gagnon.DTO.ApiResponse;
+import dev.gagnon.DTO.ApiResponse2;
+import dev.gagnon.DTO.ProductDto;
+import dev.gagnon.DTO.ProductResponseDto;
 import dev.gagnon.Service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,9 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
@@ -24,8 +24,6 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
-    private final ProductRepository productRepository;
-    //private final ProductMapper productMapper;
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ProductDto>> createProduct(
@@ -44,20 +42,16 @@ public class ProductController {
                 .body(response);
     }
 
-    @PostMapping("/all/search")
-    public ResponseEntity<ApiResponse2<List<ProductSearchResponseDTO>>> searchProducts(@RequestBody ProductSearchRequest request) {
-        ApiResponse2<List<ProductSearchResponseDTO>> result = productService.searchProducts(request);
-        return ResponseEntity.ok(result);
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDto> getById(@PathVariable Long id) {
+        ProductResponseDto response = productService.getProductById(id);
+        return ResponseEntity.ok().body(response);
     }
 
-
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse2<ProductResponseDto>> getById(@PathVariable Long id) {
-        ApiResponse2<ProductResponseDto> response = productService.getProductById(id);
-        return ResponseEntity
-                .status(response.isSuccess() ? 200 : 404)
-                .body(response);
+    @DeleteMapping("/all")
+    public ResponseEntity<?> deleteAllProducts() {
+        String response = productService.deleteAllProducts();
+        return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/all")
@@ -83,27 +77,55 @@ public class ProductController {
                 .status(response.isSuccess() ? 200 : 404)
                 .body(response);
     }
-//
+
     @GetMapping("/product/image/{filename:.+}")
     public ResponseEntity<?> getProductImage(@PathVariable String filename) {
         try {
-            // Safer: Construct path using Paths API
-            Path imagePath = Paths.get(System.getProperty("user.dir"), "uploads", filename);
-
-            if (!Files.exists(imagePath)) {
+            // Make sure this matches the actual path where your files are saved
+            String uploadDir = "/var/www/bdic_virtual_market_BackEnd/uploads/";
+            File imageFile = new File(uploadDir + filename);
+            if (!imageFile.exists()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Image not found");
             }
-
-            String contentType = Files.probeContentType(imagePath);
+            String contentType = Files.probeContentType(imageFile.toPath());
             return ResponseEntity.ok()
-                    .header("Content-Disposition", "inline; filename=\"" + filename + "\"")
+                    .header("Content-Disposition", "inline; filename=\"" + imageFile.getName() + "\"")
                     .contentType(contentType != null ? MediaType.parseMediaType(contentType) : MediaType.APPLICATION_OCTET_STREAM)
-                    .body(Files.readAllBytes(imagePath));
-
+                    .body(Files.readAllBytes(imageFile.toPath()));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error loading image: " + e.getMessage());
         }
     }
 
-   }
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<Boolean> checkAvailability(
+            @PathVariable Long id,
+            @RequestParam Integer quantity) {
+        boolean isAvailable = productService.checkProductAvailability(id, quantity);
+        return ResponseEntity.ok(isAvailable);
+    }
+
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<ApiResponse<Void>> updateStock(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> request) {
+        Integer quantity = request.get("quantity");
+        ApiResponse<Void> response = productService.updateProductStock(id, quantity);
+        return ResponseEntity
+                .status(response.isSuccess() ? 200 : 404)
+                .body(response);
+    }
+
+    @PutMapping("/{id}/quantity")
+    public ResponseEntity<ApiResponse<Void>> updateQuantity(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> request) {
+        Integer quantity = request.get("quantity");
+        ApiResponse<Void> response = productService.updateProductQuantity(id, quantity);
+        return ResponseEntity
+                .status(response.isSuccess() ? 200 : 404)
+                .body(response);
+    }
+
+}

@@ -76,7 +76,6 @@ public class MarketServiceImpl implements MarketService {
 
     private MarketDto mapToDto(Market market) {
         return MarketDto.builder()
-                .id(market.getId())
                 .name(market.getName())
                 .address(market.getAddress())
                 .city(market.getCity())

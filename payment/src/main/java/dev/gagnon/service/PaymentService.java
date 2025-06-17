@@ -1,12 +1,12 @@
 // PaymentService.java
-package dev.gagnon.Service;
+package dev.gagnon.service;
 
 import dev.gagnon.data.model.PaymentTransaction;
 import dev.gagnon.data.repository.PaymentTransactionRepository;
 import dev.gagnon.dto.request.InitializePaymentRequest;
 import dev.gagnon.dto.response.InitializePaymentResponse;
 import dev.gagnon.dto.response.VerifyPaymentResponse;
-import dev.gagnon.Exception.PaymentException;
+import dev.gagnon.execption.PaymentException;
 import dev.gagnon.utils.CredoApiClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

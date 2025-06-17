@@ -23,5 +23,4 @@ public class ShopDto {
     private Long marketSectionId;
     private Long userId;
     private Long statusId;
-    private String createdAt;
 }

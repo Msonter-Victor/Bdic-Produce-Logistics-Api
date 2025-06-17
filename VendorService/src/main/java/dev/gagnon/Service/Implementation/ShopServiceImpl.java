@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
+
 @Service
 @RequiredArgsConstructor
 public class ShopServiceImpl implements ShopService {
@@ -142,7 +144,6 @@ public class ShopServiceImpl implements ShopService {
                 .marketSectionId(shop.getMarketSection().getId())
                 .userId(shop.getUser().getId())
                 .statusId(shop.getStatus().getId())
-                .createdAt(shop.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 .build();
     }
 }

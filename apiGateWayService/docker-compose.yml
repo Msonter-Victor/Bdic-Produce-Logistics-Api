@@ -1,0 +1,8 @@
+services:
+  pulsar:
+    image: apachepulsar/pulsar:latest
+    command: bin/pulsar standalone
+    ports:
+      - "6650:6650"  # Broker port (keep this unchanged)
+      - "9000:9000"  # Changed from 8080 to 9000 for web/admin interface
+    restart: unless-stopped

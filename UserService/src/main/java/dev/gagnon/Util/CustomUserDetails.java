@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 @Getter
 public class CustomUserDetails implements UserDetails {
 
+
     private final User user;
 
     public CustomUserDetails(User user) {
@@ -25,6 +26,7 @@ public class CustomUserDetails implements UserDetails {
                 .map(role -> new SimpleGrantedAuthority(role.getName())) // use exact DB role names like "VENDOR", "LOGISTICS"
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public String getPassword() {

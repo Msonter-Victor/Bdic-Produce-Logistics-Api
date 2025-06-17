@@ -1,7 +1,7 @@
 package dev.gagnon.controller;
 
 import dev.gagnon.dto.request.SendMailRequest;
-import dev.gagnon.Service.EmailService;
+import dev.gagnon.service.EmailService;
 import jakarta.mail.MessagingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

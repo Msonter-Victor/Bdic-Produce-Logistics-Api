@@ -2,16 +2,15 @@ package dev.gagnon.Config;
 
 import dev.gagnon.Filter.JwtAuthenticationFilter;
 import dev.gagnon.Service.CustomUserDetailsService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,10 +19,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
-//----------------------------------------------
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -36,33 +31,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                //.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .formLogin(form -> form.disable())
+                // Option 1: If API gateway handles CORS, completely disable CORS in service
+                .cors(cors -> cors.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                      //.requestMatchers("/api/roles").permitAll()  // only POST /api/roles is public for now
-                        //.requestMatchers("/api/auth/**").permitAll()   // login/signup public
-                        .requestMatchers("/api/roles/AddRoles").permitAll()     // ✅ PUBLIC getAllRoles
+                        .requestMatchers("/api/auth/**").permitAll()   // login/signup public
+                        .requestMatchers("/api/roles/AddRoles").permitAll()
                         .requestMatchers("/api/users/resend-verification").permitAll()
-                      .requestMatchers("/api/users/register").permitAll()
-                      .requestMatchers("/api/roles/allRoles").permitAll()
-                      .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                       // .requestMatchers(HttpMethod.OPTIONS, "/api/auth/login").permitAll()
-                     // .requestMatchers("/api/auth/login").permitAll()
-                      .requestMatchers("/api/auth/test-email").permitAll()
-                      .requestMatchers("/api/users/verify").permitAll()
-                      .requestMatchers("/api/auth/forgot-password").permitAll()
-                      .requestMatchers("api/users/dashboard-redirect").authenticated()
-                       //.requestMatchers("/api/roles/**").hasAuthority("ADMIN") // protect the rest
-                      .requestMatchers("/api/auth/reset-password").permitAll()
+                        .requestMatchers("/api/users/all").permitAll()
+                        .requestMatchers("/api/users/register").permitAll()
+                        .requestMatchers("/api/roles/allRoles").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/test-email").permitAll()
+                        .requestMatchers("/api/users/verify").permitAll()
+                        .requestMatchers("/api/auth/forgot-password").permitAll()
+                        .requestMatchers("api/users/dashboard-redirect").authenticated()
+                        .requestMatchers("/api/auth/reset-password").permitAll()
                         .requestMatchers("api/users/add-role").permitAll()
-                        .requestMatchers("api/users/update-role").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/vendor/**").hasAuthority("VENDOR")
                         .requestMatchers("/api/logistics/**").hasAuthority("LOGISTICS")
                         .requestMatchers("/api/buyer/**").hasAuthority("BUYER")
-                        //.anyRequest().authenticated()
-                        .anyRequest().permitAll()
+                        .requestMatchers("api/auth/profile").authenticated()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(daoAuthenticationProvider())
@@ -87,27 +78,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration config = new CorsConfiguration();
-//
-//        // You can load these from properties or environment for flexibility
-//        config.setAllowedOrigins(List.of(
-//                "http://192.168.0.146:8982",               // local dev
-//                "https://marketplace.bdic.ng",              // production frontend
-//                "https://staging.yourdomain.com",     // staging environment
-//                "http://localhost:3000"
-//        ));
-//
-//        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-//        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // safer than "*"
-//        config.setExposedHeaders(List.of("Authorization")); // expose token header if you're returning it
-//        config.setAllowCredentials(true); // allow sending cookies or tokens
-//        config.setMaxAge(3600L); // cache preflight responses for 1 hour
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", config);
-//        return source;
-//    }
-
 }

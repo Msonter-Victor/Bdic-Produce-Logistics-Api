@@ -2,6 +2,7 @@ package dev.gagnon.Controller;
 import dev.gagnon.DTO.AuthRequest;
 import dev.gagnon.DTO.AuthResponse;
 import dev.gagnon.DTO.UserRegistrationRequest;
+import dev.gagnon.DTO.UserResponse;
 import dev.gagnon.Model.Role;
 import dev.gagnon.Model.User;
 import dev.gagnon.Repository.RoleRepository;
@@ -32,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -51,19 +53,19 @@ public class UserController {
 //--------------------------------------------------------------------------------------------------
 @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public ResponseEntity<?> register(
-        @ModelAttribute UserRegistrationRequest request,
-        @RequestPart(required = false) MultipartFile passport
+        @ModelAttribute UserRegistrationRequest request
+//        @RequestPart(required = false) MultipartFile passport
 ) {
-    // Optionally handle the file if present
-    String passportUrl = null;
-    if (passport != null && !passport.isEmpty()) {
-        // save the file or get its URL
-        passportUrl = fileService.save(passport); // hypothetical service
-    }
-    // inject the file URL into the request object
-    request.setPassportUrl(passportUrl);
-//    User newUser = userService.registerUser(request);
-//    return ResponseEntity.ok(newUser);
+//    // Optionally handle the file if present
+//    String passportUrl = null;
+//    if (passport != null && !passport.isEmpty()) {
+//        // save the file or get its URL
+//        passportUrl = fileService.save(passport); // hypothetical service
+//    }
+//    // inject the file URL into the request object
+//    request.setPassportUrl(passportUrl);
+////    User newUser = userService.registerUser(request);
+////    return ResponseEntity.ok(newUser);
     return userService.registerUser(request);
 }
 //--------------------------------------------------------------------------------------------------------------
@@ -172,7 +174,7 @@ public ResponseEntity<?> getAccessibleDashboards(@AuthenticationPrincipal Custom
 }
 //---------------------------------------------------------------------------------------
 
-@PostMapping("/update-role")
+@PostMapping("/add-role")
 public ResponseEntity<?> addRoleToAuthenticatedUser(@RequestBody Map<String, String> requestBody) {
     String roleName = requestBody.get("name");
 
@@ -197,38 +199,6 @@ public ResponseEntity<?> addRoleToAuthenticatedUser(@RequestBody Map<String, Str
 
     return ResponseEntity.ok("Role '" + roleName + "' added successfully.");
 }
-
-    @PostMapping("/add-role")
-    public ResponseEntity<?> addRoleToUser(@RequestBody Map<String, String> requestBody) {
-        String email = requestBody.get("email");
-        String roleName = requestBody.get("name");
-
-        if (email == null || roleName == null) {
-            return ResponseEntity.badRequest().body("Email and role name are required.");
-        }
-
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
-        }
-
-        User user = optionalUser.get();
-
-        Role role = roleRepository.findByName(roleName.toUpperCase());
-        if (role == null) {
-            return ResponseEntity.badRequest().body("Role not found.");
-        }
-
-        if (user.getRoles().contains(role)) {
-            return ResponseEntity.ok("User already has the '" + roleName + "' role.");
-        }
-
-        user.getRoles().add(role);  // this auto-updates the user_role join table
-        userRepository.save(user);
-
-        return ResponseEntity.ok("Role '" + roleName + "' added successfully for " + email + ".");
-    }
-
 //---------------------------------------------------------------------LOGIN
 //@CrossOrigin(origins = "https://marketplace.bdic.ng", allowCredentials = "true")
 @PostMapping("/login")
@@ -257,4 +227,12 @@ public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest) {
     }
 }
 
+@GetMapping("/all")
+public ResponseEntity<?> getAllUsers(){
+    List<User>users = userRepository.findAll();
+    List<UserResponse> userResponses = users.stream()
+            .map(UserResponse::new)
+            .toList();
+    return new ResponseEntity<>(userResponses, HttpStatus.OK);
+}
 }

@@ -1,8 +1,10 @@
 package dev.gagnon.Service;
 
 
-import dev.gagnon.DTO.*;
-import dev.gagnon.Model.Product;
+import dev.gagnon.DTO.ApiResponse;
+import dev.gagnon.DTO.ApiResponse2;
+import dev.gagnon.DTO.ProductDto;
+import dev.gagnon.DTO.ProductResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -18,7 +20,7 @@ public interface ProductService {
             MultipartFile sideImage4
     );
 
-    ApiResponse2<ProductResponseDto> getProductById(Long id);
+    ProductResponseDto getProductById(Long id);
 
     ApiResponse2<List<ProductResponseDto>> getAllProducts();
 
@@ -26,12 +28,11 @@ public interface ProductService {
 
     ApiResponse<Void> deleteProduct(Long id);
 
-    //ApiResponse2<List<ProductResponseDto>> searchProducts(String categoryName, String shopName, String marketName);
+    boolean checkProductAvailability(Long id, Integer quantity);
 
-    //List<ProductSearchResponseDTO> searchProducts(ProductSearchRequest request);
+    ApiResponse<Void> updateProductStock(Long id, Integer quantity);
 
-    // ProductService.java
-    ApiResponse2<List<ProductSearchResponseDTO>> searchProducts(ProductSearchRequest request);
+    ApiResponse<Void> updateProductQuantity(Long id, Integer quantity);
 
-
+    String deleteAllProducts();
 }

@@ -1,4 +1,4 @@
-package dev.gagnon.Service;
+package dev.gagnon.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
