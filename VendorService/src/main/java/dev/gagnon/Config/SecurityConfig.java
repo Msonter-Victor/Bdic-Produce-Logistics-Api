@@ -98,28 +98,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration config = new CorsConfiguration();
-//
-//        // You can load these from properties or environment for flexibility
-//        config.setAllowedOrigins(List.of(
-//                "http://192.168.0.146:8982",               // local dev
-//                "https://marketplace.bdic.ng",              // production frontend
-//                 "http://localhost:3000"
-//        ));
-//
-//        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-//        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With")); // safer than "*"
-//        config.setExposedHeaders(List.of("Authorization")); // expose token header if you're returning it
-//        config.setAllowCredentials(true); // allow sending cookies or tokens
-//        config.setMaxAge(3600L); // cache preflight responses for 1 hour
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", config);
-//
-//        return source;
-//    }
-
 }

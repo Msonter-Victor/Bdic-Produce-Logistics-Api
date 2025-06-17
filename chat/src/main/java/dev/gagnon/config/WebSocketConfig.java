@@ -8,16 +8,24 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer{
 
-  @Override
-  public void configureMessageBroker(MessageBrokerRegistry config) {
-    config.enableSimpleBroker("/topic");
-    config.setApplicationDestinationPrefixes("/app");
-  }
+@Override
+public void configureMessageBroker(MessageBrokerRegistry registry) {
+  registry.setApplicationDestinationPrefixes("/app");
+  registry.enableSimpleBroker("/topic");
+}
 
-  @Override
-  public void registerStompEndpoints(StompEndpointRegistry registry) {
-    registry.addEndpoint("/ws-chat").setAllowedOrigins("*").withSockJS();
-  }
+//@Override
+//public void registerStompEndpoints(StompEndpointRegistry registry) {
+//  registry.addEndpoint("/ws").withSockJS();
+//}
+
+@Override
+public void registerStompEndpoints(StompEndpointRegistry registry) {
+  registry.addEndpoint("/ws")
+         .setAllowedOriginPatterns("*")  // ✅ Important for API Gateway routing
+          .setAllowedOrigins("https://api.digitalmarke.bdic.ng")
+          .withSockJS();
+}
 }

@@ -44,3 +44,4 @@ notification/src/main/resources/secrets.properties
 apiGateway/src/main/resources/secrets.properties
 UserService/src/main/resources/secrets.properties
 VendorService/src/main/resources/secrets.properties
+payment/src/main/resources/secrets.properties

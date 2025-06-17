@@ -12,13 +12,13 @@ import java.util.List;
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
 public class CategoryController {
-
     private final CategoryService categoryService;
 
 //    @PostMapping("/add")
 //    public ResponseEntity<CategoryDto> create(@RequestBody CategoryDto dto) {
 //        return ResponseEntity.ok(categoryService.createCategory(dto));
 //    }
+
 @PostMapping("/add")
 public ResponseEntity<CategoryDto> create(@AuthenticationPrincipal CustomUserDetails userDetails,
                                           @RequestBody CategoryDto dto) {
