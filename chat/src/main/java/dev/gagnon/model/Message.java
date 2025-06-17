@@ -15,5 +15,5 @@ public class Message {
 
     private String date;
 
-    private Status status;
+//    private Status status;
 }
