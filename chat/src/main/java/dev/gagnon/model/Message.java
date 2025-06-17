@@ -1,4 +1,4 @@
-package dev.gagnon.Model;
+package dev.gagnon.model;
 
 import lombok.Getter;
 import lombok.Setter;

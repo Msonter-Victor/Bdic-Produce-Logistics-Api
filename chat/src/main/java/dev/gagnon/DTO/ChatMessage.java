@@ -1,4 +1,4 @@
-package dev.gagnon.DTO;
+package dev.gagnon.dto;
 import lombok.*;
 
 @Getter

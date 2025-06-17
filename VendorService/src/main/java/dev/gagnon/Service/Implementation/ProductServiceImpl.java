@@ -107,11 +107,6 @@ public class ProductServiceImpl implements ProductService {
             product.setDescription(dto.getDescription());
             product.setPrice(dto.getPrice());
             product.setQuantity(dto.getQuantity());
-//            product.setMainImageUrl(dto.getMainImageUrl());
-//            product.setSideImage1Url(dto.getSideImage1Url());
-//            product.setSideImage2Url(dto.getSideImage2Url());
-//            product.setSideImage3Url(dto.getSideImage3Url());
-//            product.setSideImage4Url(dto.getSideImage4Url());
             product.setUpdatedAt(LocalDateTime.now());
 
             productRepo.save(product);
@@ -177,35 +172,13 @@ public class ProductServiceImpl implements ProductService {
         return "successfully deleted products";
     }
 
-    //    private String saveImage(MultipartFile file) {
-//        if (file == null || file.isEmpty()) return null;
-//
-//        try {
-//            File dir = new File(UPLOAD_DIR);
-//            if (!dir.exists()) dir.mkdirs();
-//
-//            String uniqueFilename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-//            File destFile = new File(dir, uniqueFilename);
-//            file.transferTo(destFile);
-//
-//            // Return path relative to application root for front-end use
-//            return "/uploads/" + uniqueFilename;
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
-    private String saveImage(MultipartFile file) {
+     private String saveImage(MultipartFile file) {
         if (file == null || file.isEmpty()) return null;
         try {
             File dir = new File(UPLOAD_DIR);
             if (!dir.exists()) dir.mkdirs();
             // Sanitize the original filename by replacing spaces with underscores
             String originalFilename = file.getOriginalFilename().replaceAll("\\s+", "_");
-
-            // Optionally, you could also strip out other special characters if needed:
-            // originalFilename = originalFilename.replaceAll("[^a-zA-Z0-9._-]", "");
             String uniqueFilename = UUID.randomUUID() + "_" + originalFilename;
             File destFile = new File(dir, uniqueFilename);
             file.transferTo(destFile);
@@ -228,13 +201,6 @@ public class ProductServiceImpl implements ProductService {
         dto.setPrice(product.getPrice());
         dto.setDescription(product.getDescription());
         dto.setQuantity(product.getQuantity());
-//        dto.setMainImageUrl(product.getMainImageUrl());
-//        dto.setSideImage1Url(product.getSideImage1Url());
-//        dto.setSideImage2Url(product.getSideImage2Url());
-//        dto.setSideImage3Url(product.getSideImage3Url());
-//        dto.setSideImage4Url(product.getSideImage4Url());
-//        dto.setShopId(product.getShop().getId());
-//        dto.setCategoryId(product.getCategory().getId());
         return dto;
     }
 
