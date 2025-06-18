@@ -2,7 +2,7 @@ spring:
   application:
     name: vendor-service
   config:
-    import: secrets.properties
+    import: secretes.properties
   servlet:
     multipart:
       enabled: true

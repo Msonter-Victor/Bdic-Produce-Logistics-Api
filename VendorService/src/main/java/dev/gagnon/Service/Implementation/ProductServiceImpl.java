@@ -1,10 +1,7 @@
 package dev.gagnon.Service.Implementation;
 
 import com.cloudinary.Cloudinary;
-import dev.gagnon.DTO.ApiResponse;
-import dev.gagnon.DTO.ApiResponse2;
-import dev.gagnon.DTO.ProductDto;
-import dev.gagnon.DTO.ProductResponseDto;
+import dev.gagnon.DTO.*;
 import dev.gagnon.Exception.BusinessException;
 import dev.gagnon.Exception.ResourceNotFoundException;
 import dev.gagnon.Model.Category;
@@ -12,10 +9,12 @@ import dev.gagnon.Model.Product;
 import dev.gagnon.Model.Shop;
 import dev.gagnon.Repository.CategoryRepository;
 import dev.gagnon.Repository.ProductRepository;
+import dev.gagnon.Repository.ProductSpecifications;
 import dev.gagnon.Repository.ShopRepository;
 import dev.gagnon.Service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,13 +25,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
-
     private final ProductRepository productRepo;
     private final ShopRepository shopRepo;
     private final CategoryRepository categoryRepo;
@@ -107,11 +104,6 @@ public class ProductServiceImpl implements ProductService {
             product.setDescription(dto.getDescription());
             product.setPrice(dto.getPrice());
             product.setQuantity(dto.getQuantity());
-//            product.setMainImageUrl(dto.getMainImageUrl());
-//            product.setSideImage1Url(dto.getSideImage1Url());
-//            product.setSideImage2Url(dto.getSideImage2Url());
-//            product.setSideImage3Url(dto.getSideImage3Url());
-//            product.setSideImage4Url(dto.getSideImage4Url());
             product.setUpdatedAt(LocalDateTime.now());
 
             productRepo.save(product);
@@ -177,35 +169,13 @@ public class ProductServiceImpl implements ProductService {
         return "successfully deleted products";
     }
 
-    //    private String saveImage(MultipartFile file) {
-//        if (file == null || file.isEmpty()) return null;
-//
-//        try {
-//            File dir = new File(UPLOAD_DIR);
-//            if (!dir.exists()) dir.mkdirs();
-//
-//            String uniqueFilename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-//            File destFile = new File(dir, uniqueFilename);
-//            file.transferTo(destFile);
-//
-//            // Return path relative to application root for front-end use
-//            return "/uploads/" + uniqueFilename;
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
-    private String saveImage(MultipartFile file) {
+     private String saveImage(MultipartFile file) {
         if (file == null || file.isEmpty()) return null;
         try {
             File dir = new File(UPLOAD_DIR);
             if (!dir.exists()) dir.mkdirs();
             // Sanitize the original filename by replacing spaces with underscores
             String originalFilename = file.getOriginalFilename().replaceAll("\\s+", "_");
-
-            // Optionally, you could also strip out other special characters if needed:
-            // originalFilename = originalFilename.replaceAll("[^a-zA-Z0-9._-]", "");
             String uniqueFilename = UUID.randomUUID() + "_" + originalFilename;
             File destFile = new File(dir, uniqueFilename);
             file.transferTo(destFile);
@@ -228,17 +198,51 @@ public class ProductServiceImpl implements ProductService {
         dto.setPrice(product.getPrice());
         dto.setDescription(product.getDescription());
         dto.setQuantity(product.getQuantity());
-//        dto.setMainImageUrl(product.getMainImageUrl());
-//        dto.setSideImage1Url(product.getSideImage1Url());
-//        dto.setSideImage2Url(product.getSideImage2Url());
-//        dto.setSideImage3Url(product.getSideImage3Url());
-//        dto.setSideImage4Url(product.getSideImage4Url());
-//        dto.setShopId(product.getShop().getId());
-//        dto.setCategoryId(product.getCategory().getId());
         return dto;
     }
 
    //String BASE_URL = "C:/Users/BDIC/IdeaProjects/Bdic-Produce-Logistics-Api";
+
+   @Override
+   public ApiResponse2<List<ProductSearchResponseDTO>> searchProducts(ProductSearchRequest request) {
+       Specification<Product> spec = ProductSpecifications.matchesSearchRequest(request);
+       List<ProductSearchResponseDTO> results = productRepo.findAll(spec).stream()
+               .map(product -> ProductSearchResponseDTO.builder()
+                       .id(product.getId())
+                       .name(product.getName())
+                       .description(product.getDescription())
+                       .price(product.getPrice())
+                       .quantity(product.getQuantity())
+                       .mainImageUrl(product.getMainImageUrl())
+                       .sideImage1Url(product.getSideImage1Url())
+                       .sideImage2Url(product.getSideImage2Url())
+                       .sideImage3Url(product.getSideImage3Url())
+                       .sideImage4Url(product.getSideImage4Url())
+                       .shopId(product.getShop() != null ? product.getShop().getId() : null)
+                       .shopName(product.getShop() != null ? product.getShop().getName() : null)
+                       .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                       .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                       .marketName(
+                               (product.getShop() != null &&
+                                       product.getShop().getMarketSection() != null &&
+                                       product.getShop().getMarketSection().getMarket() != null)
+                                       ? product.getShop().getMarketSection().getMarket().getName()
+                                       : null)
+                       .vendor(product.getShop() != null && product.getShop().getUser() != null
+                               ? product.getShop().getUser().getSurname() + " " + product.getShop().getUser().getOtherName()
+                               : null)
+                       .market_section(product.getShop() != null && product.getShop().getMarketSection() != null
+                               ? product.getShop().getMarketSection().getName()
+                               : null)
+                       .shop_address(product.getShop() != null ? product.getShop().getAddress() : null)
+                       .status(product.getShop() != null && product.getShop().getStatus() != null
+                               ? product.getShop().getStatus().getName()
+                               : null)
+                       .build())
+               .collect(Collectors.toList());
+
+       return new ApiResponse2<>(true, "Search results found", results);
+   }
 
     private ProductResponseDto mapToDto4SingleProduct(Product product) {
         ProductResponseDto dto = new ProductResponseDto();
@@ -265,6 +269,8 @@ public class ProductServiceImpl implements ProductService {
         dto.setCategoryName(product.getCategory().getName());
 
         return dto;
+
+
     }
 
 

@@ -1,4 +1,4 @@
-package dev.gagnon.Model;
+package dev.gagnon.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,5 +15,5 @@ public class Message {
 
     private String date;
 
-    private Status status;
+//    private Status status;
 }

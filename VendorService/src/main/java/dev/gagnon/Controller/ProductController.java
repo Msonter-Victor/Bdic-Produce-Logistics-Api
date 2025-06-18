@@ -1,9 +1,6 @@
 package dev.gagnon.Controller;
 
-import dev.gagnon.DTO.ApiResponse;
-import dev.gagnon.DTO.ApiResponse2;
-import dev.gagnon.DTO.ProductDto;
-import dev.gagnon.DTO.ProductResponseDto;
+import dev.gagnon.DTO.*;
 import dev.gagnon.Service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,6 +37,11 @@ public class ProductController {
         return ResponseEntity
                 .status(response.isSuccess() ? 200 : 400)
                 .body(response);
+    }
+    @PostMapping("/all/search")
+    public ResponseEntity<ApiResponse2<List<ProductSearchResponseDTO>>> searchProducts(@RequestBody ProductSearchRequest request) {
+        ApiResponse2<List<ProductSearchResponseDTO>> result = productService.searchProducts(request);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
