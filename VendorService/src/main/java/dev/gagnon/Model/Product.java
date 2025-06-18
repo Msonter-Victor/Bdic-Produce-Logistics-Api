@@ -3,6 +3,8 @@ package dev.gagnon.Model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,17 +14,20 @@ import java.time.LocalDateTime;
 @Builder
 public class Product {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
 
-    private Double price;
+    private BigDecimal price;
 
     private String description;
 
     private Integer quantity;
+
+    private BigDecimal discountAmount = BigDecimal.ZERO; // Optional discount
 
     private String mainImageUrl;
     private String sideImage1Url;
@@ -40,4 +45,9 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    // Getter for discounted price
+    public BigDecimal getDiscountedPrice() {
+        return price.subtract(discountAmount != null ? discountAmount : BigDecimal.ZERO);
+    }
 }
