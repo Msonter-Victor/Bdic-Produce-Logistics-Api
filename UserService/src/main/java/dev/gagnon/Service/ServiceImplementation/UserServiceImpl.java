@@ -1,78 +1,52 @@
 package dev.gagnon.Service.ServiceImplementation;
 
+import dev.gagnon.DTO.RegisterResponse;
 import dev.gagnon.DTO.ResetPasswordRequest;
 import dev.gagnon.DTO.UserRegistrationRequest;
-import dev.gagnon.Model.Role;
 import dev.gagnon.Model.User;
-import dev.gagnon.Repository.RoleRepository;
+import dev.gagnon.Model.constants.Role;
 import dev.gagnon.Repository.UserRepository;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-
-private final UserRepository userRepository;
-
-private final EmailService emailService;
-
-private final PasswordEncoder passwordEncoder;
-
-private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
+    private final ModelMapper modelMapper;
 
     //--------------------------------------------------------------------------------------------
     @Override
-    public ResponseEntity<?> registerUser(UserRegistrationRequest request) {
+    public RegisterResponse registerUser(UserRegistrationRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity.badRequest().body("Email already in use.");
+            throw new UsernameNotFoundException("user exists with email");
         }
 
         User.UserBuilder userBuilder = User.builder()
                 .email(request.getEmail())
-                .surname(request.getSurname())
-                .otherName(request.getOtherName())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .phone(request.getPhone() != null ? request.getPhone() : null)
-                .nin(request.getNin() != null ? request.getNin() : null)
-                .passportUrl(request.getPassportUrl() != null ? request.getPassportUrl() : null)
-                .verificationToken(UUID.randomUUID().toString())
-                .tokenExpiration(LocalDateTime.now().plusMinutes(15))
-                .isVerified(false);
-
-        Role defaultRole = roleRepository.findById(1L).orElse(null);
-        if (defaultRole != null) {
-            userBuilder.roles(Set.of(defaultRole));
-        }
-
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .password(passwordEncoder.encode(request.getPassword()));
         User user = userBuilder.build();
+        user.setRoles(new HashSet<>());
+        user.getRoles().add(Role.BUYER);
         User savedUser = userRepository.save(user);
-
-        String verificationLink = "http://localhost:8982/api/users/verify?token=" + savedUser.getVerificationToken();
-        String emailMessage;
-        try {
-            emailService.sendVerificationEmail(
-                    savedUser.getEmail(),
-                    "Verify Your Account",
-                    "<p>Click the link to verify your account: <a href=\"" + verificationLink + "\">Verify</a></p>"
-            );
-            emailMessage = "Please check your email for verification.";
-        } catch (Exception e) {
-            // Log the exception for monitoring
-            System.err.println("Email failed: " + e.getMessage());
-            emailMessage = "User registered successfully, but verification email could not be sent. Please try resending later.";
-        }
-
-        return ResponseEntity.ok("User registered successfully. " + emailMessage);
+        RegisterResponse response = modelMapper.map(savedUser, RegisterResponse.class);
+        response.setMessage("User registered successfully.");
+        return response;
     }
 
     //---------------------------------------------------------------------------------------------

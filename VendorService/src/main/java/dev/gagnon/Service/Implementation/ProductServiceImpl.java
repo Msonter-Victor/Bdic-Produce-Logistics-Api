@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -245,7 +246,7 @@ public class ProductServiceImpl implements ProductService {
 
         dto.setId(product.getId());
         dto.setName(product.getName());
-        dto.setPrice(product.getPrice());
+        dto.setPrice(BigDecimal.valueOf(product.getPrice()));
         dto.setDescription(product.getDescription());
         dto.setQuantity(product.getQuantity());
 

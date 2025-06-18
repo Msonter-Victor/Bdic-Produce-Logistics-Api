@@ -29,20 +29,25 @@ spring:
           predicates:
             - Path=/api/logistics/**
 
-        # WebSocket and HTTP routes for chat service
-        - id: chat-ws
-          uri: lb://CHAT-SERVICE
-          predicates:
-            - Path=/ws-chat/**
-          filters:
-            - RewritePath=/ws-chat/(?<segment>.*), /$\{segment}
-
-        - id: chat-service-http
+        - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
             - Path=/api/chat/**
+
+        - id: chat-static
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/chat/**
           filters:
-            - RewritePath=/api/chat/(?<segment>.*), /api/chat/$\{segment}
+            - StripPrefix=1
+
+        - id: chat-ws
+          uri: lb:ws://CHAT-SERVICE
+          predicates:
+            - Path=/ws/**
+        #          filters:
+        #             - StripPrefix=1
+        # WebSocket and HTTP routes for chat service
 
         # Other existing services...
         - id: user-service

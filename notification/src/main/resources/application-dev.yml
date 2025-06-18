@@ -24,20 +24,17 @@ spring:
       url: pulsar://localhost:6650
 
 
-mail:
-  host: ${SPRING_MAIL_HOST}
-  port: ${SPRING_MAIL_PORT}
-  username: ${SPRING_MAIL_USERNAME}
-  password: ${SPRING_MAIL_PASSWORD}
-  protocol: ${SPRING_MAIL_PROTOCOL}
-  properties:
-    mail.smtp.auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}
-    mail.smtp.ssl.enable: ${MAIL_SMTP_SSL_ENABLE}
-    mail.smtp.socketFactory.port: ${MAIL_SMTP_SOCKETFACTORY_PORT}
-    mail.smtp.socketFactory.class: ${MAIL_SMTP_SOCKETFACTORY_CLASS}
-
-mailgun:
-  sender: ${SPRING_MAIL_USERNAME}
+#mail:
+#  host: ${SPRING_MAIL_HOST}
+#  port: ${SPRING_MAIL_PORT}
+#  username: ${SPRING_MAIL_USERNAME}|cbos tnbf yruz dglu
+#  password: ${SPRING_MAIL_PASSWORD}
+#  protocol: ${SPRING_MAIL_PROTOCOL}
+#  properties:
+#    mail.smtp.auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}
+#    mail.smtp.ssl.enable: ${MAIL_SMTP_SSL_ENABLE}
+#    mail.smtp.socketFactory.port: ${MAIL_SMTP_SOCKETFACTORY_PORT}
+#    mail.smtp.socketFactory.class: ${MAIL_SMTP_SOCKETFACTORY_CLASS}
 
 
 eureka:

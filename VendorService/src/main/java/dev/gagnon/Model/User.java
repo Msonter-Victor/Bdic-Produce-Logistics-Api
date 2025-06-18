@@ -27,18 +27,16 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String surname;
+    private String firstName;
 
-    @Column(name = "other_name", nullable = false)
-    private String otherName;
+    private String lastName;
 
 
     private String phone;
 
     private String nin;
 
-    private String passportUrl;
+    private String mediaUrl;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

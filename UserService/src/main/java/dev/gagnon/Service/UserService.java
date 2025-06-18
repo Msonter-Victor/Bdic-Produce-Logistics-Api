@@ -1,5 +1,6 @@
 package dev.gagnon.Service;
 
+import dev.gagnon.DTO.RegisterResponse;
 import dev.gagnon.DTO.ResetPasswordRequest;
 import dev.gagnon.Model.User;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 public interface UserService {
     boolean verifyUser(String token);
-    ResponseEntity<?> registerUser(UserRegistrationRequest request);
+    RegisterResponse registerUser(UserRegistrationRequest request);
 
     void resendVerificationEmail(String email);
 

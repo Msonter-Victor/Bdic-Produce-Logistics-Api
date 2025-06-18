@@ -1,8 +1,10 @@
 package dev.gagnon.Controller;
 import dev.gagnon.DTO.CategoryDto;
+import dev.gagnon.DTO.SubCategoryRequest;
 import dev.gagnon.Service.CategoryService;
 import dev.gagnon.Util.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +27,16 @@ public ResponseEntity<CategoryDto> create(@AuthenticationPrincipal CustomUserDet
     dto.setCreatedById(userDetails.getUser().getId());
     return ResponseEntity.ok(categoryService.createCategory(dto));
 }
+
+    @PostMapping("/add-sub")
+    public ResponseEntity<?> addSubCategory(SubCategoryRequest request){
+        try {
+            var response = categoryService.createSubCategory(request);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDto> getById(@PathVariable Long id) {

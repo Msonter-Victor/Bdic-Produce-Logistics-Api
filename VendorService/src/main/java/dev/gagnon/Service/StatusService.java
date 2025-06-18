@@ -72,7 +72,7 @@ public class StatusService {
                 .id(status.getId())
                 .name(status.getName())
                 .createdById(status.getCreatedBy().getId())
-                .createdByUsername(status.getCreatedBy().getSurname())
+                .createdByUsername(status.getCreatedBy().getFirstName())
                 .createdAt(status.getCreatedAt())
                 .build();
     }

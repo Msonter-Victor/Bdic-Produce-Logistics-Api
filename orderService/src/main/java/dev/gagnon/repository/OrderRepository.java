@@ -12,6 +12,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByOrderNumber(String orderNumber);
     @Query("select o from Order o where o.orderNumber=:orderNumber and o.buyerEmail=:buyerEmail")
     Optional<Order> findByOrderNumberAndBuyerEmail(String orderNumber, String buyerEmail);
-
-    List<Order> findByBuyerEmailOrderByCreatedAtDesc(String buyerEmail);
+    @Query("select o from Order o where o.buyerEmail=:buyerEmail")
+    List<Order> findByBuyerEmail(String buyerEmail);
 }

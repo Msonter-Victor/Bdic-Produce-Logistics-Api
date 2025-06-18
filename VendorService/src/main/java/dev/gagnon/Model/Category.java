@@ -28,7 +28,7 @@ public class Category {
 
     // ✅ Add this
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore // Prevent infinite recursion in JSON (optional)
+    @JsonIgnore
     private List<Product> products = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)

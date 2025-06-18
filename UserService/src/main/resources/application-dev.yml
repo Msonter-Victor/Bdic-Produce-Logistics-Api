@@ -53,3 +53,6 @@ server:
   port: 8982
   address: 0.0.0.0
 
+rsa:
+  public-key: classpath:keys/publicKey.pem
+  private-key: classpath:keys/privateKey.pem

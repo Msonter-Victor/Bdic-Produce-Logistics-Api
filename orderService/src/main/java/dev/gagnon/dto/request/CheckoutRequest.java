@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CheckoutRequest {
     private String buyerEmail;
-    private String deliveryMethod; // "pickup" or "delivery"
+    private String deliveryMethod;
     private String address;
 }

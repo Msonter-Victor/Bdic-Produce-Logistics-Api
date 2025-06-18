@@ -1,5 +1,7 @@
 package dev.gagnon.Service;
 import dev.gagnon.DTO.CategoryDto;
+import dev.gagnon.DTO.SubCategoryRequest;
+
 import java.util.List;
 
 public interface CategoryService {
@@ -8,4 +10,6 @@ public interface CategoryService {
     List<CategoryDto> getAllCategories();
     CategoryDto updateCategory(Long id, CategoryDto dto);
     void deleteCategory(Long id);
+
+    Object createSubCategory(SubCategoryRequest request);
 }

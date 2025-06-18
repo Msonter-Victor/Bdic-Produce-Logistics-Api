@@ -15,8 +15,8 @@ public class UserResponse {
     private String email;
     public UserResponse(User user) {
         this.id = user.getId();
-        this.firstName = user.getSurname();
-        this.lastName =user.getOtherName();
+        this.firstName = user.getFirstName();
+        this.lastName =user.getLastName();
         this.email = user.getEmail();
     }
 }

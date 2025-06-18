@@ -24,6 +24,5 @@ public class OrderItemDto {
         this.unitPrice = orderItem.getUnitPrice();
         this.quantity = orderItem.getQuantity();
         this.productImage = orderItem.getProductImage();
-
     }
 }
