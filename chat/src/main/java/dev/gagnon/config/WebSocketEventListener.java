@@ -1,7 +1,7 @@
 package dev.gagnon.config;
 
-import dev.gagnon.DTO.ChatMessage;
-import dev.gagnon.DTO.MessageType;
+import dev.gagnon.dto.ChatMessage;
+import dev.gagnon.dto.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

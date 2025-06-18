@@ -1,10 +1,7 @@
 package dev.gagnon.Service.Implementation;
 
 import com.cloudinary.Cloudinary;
-import dev.gagnon.DTO.ApiResponse;
-import dev.gagnon.DTO.ApiResponse2;
-import dev.gagnon.DTO.ProductDto;
-import dev.gagnon.DTO.ProductResponseDto;
+import dev.gagnon.DTO.*;
 import dev.gagnon.Exception.BusinessException;
 import dev.gagnon.Exception.ResourceNotFoundException;
 import dev.gagnon.Model.Category;
@@ -12,10 +9,12 @@ import dev.gagnon.Model.Product;
 import dev.gagnon.Model.Shop;
 import dev.gagnon.Repository.CategoryRepository;
 import dev.gagnon.Repository.ProductRepository;
+import dev.gagnon.Repository.ProductSpecifications;
 import dev.gagnon.Repository.ShopRepository;
 import dev.gagnon.Service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,13 +25,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
-
     private final ProductRepository productRepo;
     private final ShopRepository shopRepo;
     private final CategoryRepository categoryRepo;
@@ -206,6 +203,47 @@ public class ProductServiceImpl implements ProductService {
 
    //String BASE_URL = "C:/Users/BDIC/IdeaProjects/Bdic-Produce-Logistics-Api";
 
+   @Override
+   public ApiResponse2<List<ProductSearchResponseDTO>> searchProducts(ProductSearchRequest request) {
+       Specification<Product> spec = ProductSpecifications.matchesSearchRequest(request);
+       List<ProductSearchResponseDTO> results = productRepo.findAll(spec).stream()
+               .map(product -> ProductSearchResponseDTO.builder()
+                       .id(product.getId())
+                       .name(product.getName())
+                       .description(product.getDescription())
+                       .price(product.getPrice())
+                       .quantity(product.getQuantity())
+                       .mainImageUrl(product.getMainImageUrl())
+                       .sideImage1Url(product.getSideImage1Url())
+                       .sideImage2Url(product.getSideImage2Url())
+                       .sideImage3Url(product.getSideImage3Url())
+                       .sideImage4Url(product.getSideImage4Url())
+                       .shopId(product.getShop() != null ? product.getShop().getId() : null)
+                       .shopName(product.getShop() != null ? product.getShop().getName() : null)
+                       .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                       .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                       .marketName(
+                               (product.getShop() != null &&
+                                       product.getShop().getMarketSection() != null &&
+                                       product.getShop().getMarketSection().getMarket() != null)
+                                       ? product.getShop().getMarketSection().getMarket().getName()
+                                       : null)
+                       .vendor(product.getShop() != null && product.getShop().getUser() != null
+                               ? product.getShop().getUser().getSurname() + " " + product.getShop().getUser().getOtherName()
+                               : null)
+                       .market_section(product.getShop() != null && product.getShop().getMarketSection() != null
+                               ? product.getShop().getMarketSection().getName()
+                               : null)
+                       .shop_address(product.getShop() != null ? product.getShop().getAddress() : null)
+                       .status(product.getShop() != null && product.getShop().getStatus() != null
+                               ? product.getShop().getStatus().getName()
+                               : null)
+                       .build())
+               .collect(Collectors.toList());
+
+       return new ApiResponse2<>(true, "Search results found", results);
+   }
+
     private ProductResponseDto mapToDto4SingleProduct(Product product) {
         ProductResponseDto dto = new ProductResponseDto();
 
@@ -231,6 +269,8 @@ public class ProductServiceImpl implements ProductService {
         dto.setCategoryName(product.getCategory().getName());
 
         return dto;
+
+
     }
 
 
