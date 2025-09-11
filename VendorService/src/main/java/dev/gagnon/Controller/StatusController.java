@@ -1,7 +1,7 @@
 package dev.gagnon.Controller;
 
 import dev.gagnon.DTO.StatusRequestDTO;
-import dev.gagnon.DTO.StatusResponseDTO;
+import dev.gagnon.DTO.response.StatusResponseDTO;
 import dev.gagnon.Service.StatusService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

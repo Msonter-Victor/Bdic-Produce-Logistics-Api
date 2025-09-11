@@ -1,6 +1,7 @@
 spring:
   application:
     name: user-service
+
   config:
     import: secrets.properties
   servlet:
@@ -17,20 +18,20 @@ spring:
     username: ${DATABASE_USER_DEV}
     password: ${DATABASE_PASSWORD_DEV}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 600000
+      connection-timeout: 10000
   jpa:
     hibernate:
       ddl-auto: update
 
-  mail:
-    host: ${SPRING_MAIL_HOST}
-    port: ${SPRING_MAIL_PORT}
-    username: ${SPRING_MAIL_USERNAME}
-    password: ${SPRING_MAIL_PASSWORD}
-    protocol: ${SPRING_MAIL_PROTOCOL}
-    properties:
-      mail.smtp.auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH}
-      mail.smtp.starttls.required: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED}
-      mail.smtp.starttls.enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE}
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 eureka:
   instance:
@@ -56,3 +57,9 @@ server:
 rsa:
   public-key: classpath:keys/publicKey.pem
   private-key: classpath:keys/privateKey.pem
+
+
+app:
+  frontend:
+    url: marketplace.bdic.ng
+

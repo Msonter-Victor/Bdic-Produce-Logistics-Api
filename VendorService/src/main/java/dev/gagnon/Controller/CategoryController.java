@@ -1,14 +1,17 @@
 package dev.gagnon.Controller;
 import dev.gagnon.DTO.CategoryDto;
 import dev.gagnon.DTO.SubCategoryRequest;
+import dev.gagnon.DTO.response.CategoryResponse;
+import dev.gagnon.DTO.response.SubCategoryResponse;
 import dev.gagnon.Service.CategoryService;
-import dev.gagnon.Util.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import java.util.List;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -16,40 +19,48 @@ import java.util.List;
 public class CategoryController {
     private final CategoryService categoryService;
 
-//    @PostMapping("/add")
-//    public ResponseEntity<CategoryDto> create(@RequestBody CategoryDto dto) {
-//        return ResponseEntity.ok(categoryService.createCategory(dto));
-//    }
+    @PostMapping("/add")
+    public ResponseEntity<?> create(@RequestBody CategoryDto dto) {
+        try{
+            return ResponseEntity.ok(categoryService.createCategory(dto));
+        }
+        catch(Exception e){
+            return new ResponseEntity<>(e.getMessage(), BAD_REQUEST);
+        }
+    }
 
-@PostMapping("/add")
-public ResponseEntity<CategoryDto> create(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                          @RequestBody CategoryDto dto) {
-    dto.setCreatedById(userDetails.getUser().getId());
-    return ResponseEntity.ok(categoryService.createCategory(dto));
-}
+    @GetMapping("/getAllSub")
+    public ResponseEntity<?> getAllSub() {
+        return ResponseEntity.ok(categoryService.getAllSubCategories());
+    }
+
+    @GetMapping("/getAllCategorySub")
+    public ResponseEntity<?> getAllCategorySub(@RequestParam String categoryName) {
+        return ResponseEntity.ok(categoryService.getAllSubCategorySub(categoryName));
+    }
 
     @PostMapping("/add-sub")
     public ResponseEntity<?> addSubCategory(SubCategoryRequest request){
         try {
-            var response = categoryService.createSubCategory(request);
+            SubCategoryResponse response = categoryService.createSubCategory(request);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         }catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), BAD_REQUEST);
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CategoryDto> getById(@PathVariable Long id) {
+    @GetMapping("/getBy/{id}")
+    public ResponseEntity<CategoryResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<CategoryDto>> getAll() {
+    public ResponseEntity<List<CategoryResponse>> getAll() {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<CategoryDto> update(@PathVariable Long id, @RequestBody CategoryDto dto) {
+    public ResponseEntity<CategoryResponse> update(@PathVariable Long id, @RequestBody CategoryDto dto) {
         return ResponseEntity.ok(categoryService.updateCategory(id, dto));
     }
 

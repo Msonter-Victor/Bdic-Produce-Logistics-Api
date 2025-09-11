@@ -11,7 +11,6 @@ import java.util.Properties;
 
 @Configuration
 public class MailConfig {
-
     @Value("${mail.host}")
     private String mailHost;
 
@@ -30,14 +29,9 @@ public class MailConfig {
     @Value("${mail.properties.mail.smtp.auth}")
     private String smtpAuth;
 
-    @Value("${mail.properties.mail.smtp.ssl.enable}")
-    private String smtpSslEnable;
+    @Value("${mail.properties.mail.smtp.starttls.enable}")
+    private String smtpStarttlsEnable;
 
-    @Value("${mail.properties.mail.smtp.socketFactory.port}")
-    private String socketFactoryPort;
-
-    @Value("${mail.properties.mail.smtp.socketFactory.class}")
-    private String socketFactoryClass;
     @Value("${mailgun.sender}")
     @Getter
     private String senderEmail;
@@ -53,9 +47,10 @@ public class MailConfig {
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", mailProtocol);
         props.put("mail.smtp.auth", smtpAuth);
-        props.put("mail.smtp.ssl.enable", smtpSslEnable);
-        props.put("mail.smtp.socketFactory.port", socketFactoryPort);
-        props.put("mail.smtp.socketFactory.class", socketFactoryClass);
+        props.put("mail.smtp.starttls.enable", smtpStarttlsEnable);
+        // Additional recommended properties
+        props.put("mail.smtp.starttls.required", "true");
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2");
 
         return mailSender;
     }

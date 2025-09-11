@@ -1,15 +1,21 @@
+
 package dev.gagnon.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@NoArgsConstructor
+@Setter
+@Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class CheckoutRequest {
     private String buyerEmail;
     private String deliveryMethod;
+    private double deliveryFee;
     private String address;
+    private String reference;
+    private String phoneNumber;
 }
+

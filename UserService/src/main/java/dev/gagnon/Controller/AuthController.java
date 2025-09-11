@@ -2,10 +2,21 @@ package dev.gagnon.Controller;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import dev.gagnon.DTO.*;
+import dev.gagnon.DTO.request.ForgotPasswordRequest;
+import dev.gagnon.DTO.request.LoginRequest;
+import dev.gagnon.DTO.request.OTPVerificationRequest;
+import dev.gagnon.DTO.request.PasswordRequest;
+import dev.gagnon.DTO.request.ResendOTPRequest;
+import dev.gagnon.DTO.response.ErrorResponse;
+import dev.gagnon.DTO.response.LoginResponse;
+import dev.gagnon.DTO.response.OTPResponse;
+import dev.gagnon.DTO.response.UserApiResponse;
 import dev.gagnon.Model.User;
+import dev.gagnon.Repository.UserRepository;
 import dev.gagnon.Service.EmailService;
 import dev.gagnon.Service.UserService;
+import dev.gagnon.exception.BusinessException;
+import dev.gagnon.exception.UserBaseException;
 import dev.gagnon.security.config.RsaKeyProperties;
 import dev.gagnon.security.data.models.SecureUser;
 import dev.gagnon.security.services.AuthService;
@@ -33,6 +44,7 @@ import static dev.gagnon.security.utils.SecurityUtils.JWT_PREFIX;
 import static java.time.LocalDateTime.now;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -40,13 +52,13 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthenticationManager authenticationManager;
-    private final EmailService emailService;
     private final UserService userService;
     private final AuthService authService;
     private final RsaKeyProperties rsaKeys;
 
-    @Autowired
-    private HttpServletResponse response;
+    private final  HttpServletResponse response;
+
+    private final UserRepository userRepository;
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(AUTHORIZATION) String token) {
@@ -56,11 +68,23 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
+            User user = userRepository.findByEmail(loginRequest.getEmail())
+                    .orElseThrow(()->new BusinessException("user no found"));
+            
+            if(!user.isVerified()) {
+                ErrorResponse errorResponse = ErrorResponse.builder()
+                        .responseTime(now())
+                        .isSuccessful(false)
+                        .error("AccountNotVerified")
+                        .message("Account not verified. Please check your email and verify your account.")
+                        .path("/api/auth/login")
+                        .build();
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            }
+            
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail().toLowerCase(),
@@ -91,7 +115,16 @@ public class AuthController {
                     .responseTime(now())
                     .isSuccessful(false)
                     .error("UnsuccessfulAuthentication")
-                    .message("Invalid email or password")
+                    .message("Invalid credentials")
+                    .path("/api/auth/login")
+                    .build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        } catch (BusinessException e) {
+            ErrorResponse errorResponse = ErrorResponse.builder()
+                    .responseTime(now())
+                    .isSuccessful(false)
+                    .error("BusinessException")
+                    .message(e.getMessage())
                     .path("/api/auth/login")
                     .build();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
@@ -129,6 +162,18 @@ public class AuthController {
         return cookie;
     }
 
+
+    @PutMapping("/change-password")
+    public ResponseEntity<?>changePassword(@RequestBody PasswordRequest passwordRequest) {
+        try {
+            String response = userService.resetPassword(passwordRequest);
+            return ResponseEntity.ok(response);
+        }
+        catch (UserBaseException e){
+            return new ResponseEntity<>(e.getMessage(), BAD_REQUEST);
+        }
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Principal principal) {
         String email = principal.getName();
@@ -142,29 +187,226 @@ public class AuthController {
         ));
     }
 
-    @GetMapping("/test-email")
-    public ResponseEntity<String> testEmail() {
+
+    @GetMapping("/verify")
+    public ResponseEntity<?> verifyUser(@RequestParam String token) {
         try {
-            emailService.sendVerificationEmail(
-                    "bemgbautor@gmail.com",
-                    "Test Email",
-                    "<p>This is a test from Mailgun</p>"
-            );
-            return ResponseEntity.ok("Email sent successfully!");
+            boolean isVerified = userService.verifyUser(token);
+            if (isVerified) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Email verified successfully"
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Invalid or expired verification token"
+                ));
+            }
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Email failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Verification failed: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOTP(@Valid @RequestBody OTPVerificationRequest request) {
+        try {
+            boolean isVerified = userService.verifyUserWithOTP(request.getEmail(), request.getOtp());
+            
+            OTPResponse response = OTPResponse.builder()
+                    .success(isVerified)
+                    .message(isVerified ? "Email verified successfully" : "Invalid OTP")
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.ok(new UserApiResponse<>(true, response));
+        } catch (BusinessException e) {
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.badRequest().body(new UserApiResponse<>(false, response));
+        } catch (Exception e) {
+            log.error("OTP verification error: ", e);
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message("Verification failed: " + e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UserApiResponse<>(false, response));
+        }
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOTP(@Valid @RequestBody ResendOTPRequest request) {
+        try {
+            boolean sent = userService.resendOTP(request.getEmail());
+            
+            OTPResponse response = OTPResponse.builder()
+                    .success(sent)
+                    .message(sent ? "OTP sent successfully" : "Failed to send OTP")
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.ok(new UserApiResponse<>(true, response));
+        } catch (BusinessException e) {
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.badRequest().body(new UserApiResponse<>(false, response));
+        } catch (Exception e) {
+            log.error("Resend OTP error: ", e);
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message("Failed to resend OTP: " + e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UserApiResponse<>(false, response));
+        }
+    }
+
+    @PostMapping("/send-verification-otp")
+    public ResponseEntity<?> sendVerificationOTP(@Valid @RequestBody ResendOTPRequest request) {
+        try {
+            userService.sendVerificationOTP(request.getEmail());
+            
+            OTPResponse response = OTPResponse.builder()
+                    .success(true)
+                    .message("Verification OTP sent successfully")
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.ok(new UserApiResponse<>(true, response));
+        } catch (BusinessException e) {
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.badRequest().body(new UserApiResponse<>(false, response));
+        } catch (Exception e) {
+            log.error("Send verification OTP error: ", e);
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message("Failed to send verification OTP: " + e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UserApiResponse<>(false, response));
         }
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        return userService.handleForgotPassword(request.getEmail());
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        try {
+            boolean sent = userService.sendPasswordResetOTP(request.getEmail());
+            
+            OTPResponse response = OTPResponse.builder()
+                    .success(sent)
+                    .message(sent ? "Password reset code sent successfully" : "Failed to send password reset code")
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.ok(new UserApiResponse<>(true, response));
+        } catch (BusinessException e) {
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.badRequest().body(new UserApiResponse<>(false, response));
+        } catch (Exception e) {
+            log.error("Forgot password error: ", e);
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message("Failed to send password reset code: " + e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UserApiResponse<>(false, response));
+        }
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        userService.resetPassword(request);
-        return ResponseEntity.ok("Password has been reset successfully.");
+    @PostMapping("/verify-password-reset-otp")
+    public ResponseEntity<?> verifyPasswordResetOTP(@Valid @RequestBody OTPVerificationRequest request) {
+        try {
+            boolean isVerified = userService.verifyPasswordResetOTP(request.getEmail(), request.getOtp());
+            
+            OTPResponse response = OTPResponse.builder()
+                    .success(isVerified)
+                    .message(isVerified ? "OTP verified successfully" : "Invalid OTP")
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.ok(new UserApiResponse<>(true, response));
+        } catch (BusinessException e) {
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.badRequest().body(new UserApiResponse<>(false, response));
+        } catch (Exception e) {
+            log.error("Verify password reset OTP error: ", e);
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message("Verification failed: " + e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UserApiResponse<>(false, response));
+        }
     }
+
+    @PostMapping("/reset-password-with-otp")
+    public ResponseEntity<?> resetPasswordWithOTP(@Valid @RequestBody dev.gagnon.DTO.request.ForgotPasswordOTPRequest request) {
+        try {
+            boolean isReset = userService.resetPasswordWithOTP(request.getEmail(), request.getOtp(), request.getNewPassword());
+            
+            OTPResponse response = OTPResponse.builder()
+                    .success(isReset)
+                    .message(isReset ? "Password reset successfully" : "Failed to reset password")
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.ok(new UserApiResponse<>(true, response));
+        } catch (BusinessException e) {
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.badRequest().body(new UserApiResponse<>(false, response));
+        } catch (Exception e) {
+            log.error("Reset password with OTP error: ", e);
+            OTPResponse response = OTPResponse.builder()
+                    .success(false)
+                    .message("Failed to reset password: " + e.getMessage())
+                    .responseTime(now())
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UserApiResponse<>(false, response));
+        }
+    }
+
 }

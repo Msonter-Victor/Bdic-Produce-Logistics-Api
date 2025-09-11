@@ -1,10 +1,14 @@
 package dev.gagnon.security.services;
 
 
+import dev.gagnon.Model.User;
+import dev.gagnon.Repository.UserRepository;
+import dev.gagnon.Repository.UserSessionRepository;
 import dev.gagnon.security.data.models.BlacklistedToken;
 import dev.gagnon.security.data.repositories.BlacklistedTokenRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import static java.time.Instant.now;
@@ -13,13 +17,28 @@ import static java.time.temporal.ChronoUnit.HOURS;
 @Service
 @Slf4j
 public class AuthServiceImpl implements AuthService {
-
     private final BlacklistedTokenRepository blacklistedTokenRepository;
+    private final UserSessionRepository userSessionRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public AuthServiceImpl(BlacklistedTokenRepository blacklistedTokenRepository) {
+    public AuthServiceImpl(BlacklistedTokenRepository blacklistedTokenRepository, UserSessionRepository userSessionRepository, UserRepository userRepository) {
         this.blacklistedTokenRepository = blacklistedTokenRepository;
+        this.userSessionRepository = userSessionRepository;
+        this.userRepository = userRepository;
     }
+
+
+    @Override
+    public void invalidatePreviousTokens(String email, String newToken) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (user.getCurrentToken() != null && !user.getCurrentToken().isEmpty()) {
+            blacklist(user.getCurrentToken());
+        }
+        userSessionRepository.updateCurrentToken(user.getId(), newToken);
+    }
+
 
 
     @Override

@@ -13,6 +13,7 @@ public class ProductDto {
     private BigDecimal price;
     private String description;
     private Integer quantity;
+    private String vendorEmail;
 
     private MultipartFile mainImageUrl;
     private MultipartFile sideImage1Url;

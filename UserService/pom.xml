@@ -50,6 +50,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
+        
+        <!-- Unirest for Mailgun API -->
+        <dependency>
+            <groupId>com.mashape.unirest</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>1.4.9</version>
+        </dependency>
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -84,7 +91,6 @@
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <!-- Spring Boot Plugin -->
@@ -112,5 +118,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

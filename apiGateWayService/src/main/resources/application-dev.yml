@@ -1,5 +1,5 @@
 server:
-  port: 8081  # Gateway's port
+  port: 8081
   address: 0.0.0.0
 
 spring:
@@ -8,18 +8,23 @@ spring:
 
   cloud:
     gateway:
+      httpclient:
+        websocket:
+          max-frame-payload-length: 1048576
       discovery:
         locator:
-          enabled: true  # Enable discovery-based routing
+          enabled: true
           lower-case-service-id: true
 
       routes:
-        # Existing routes...
         - id: order-service
           uri: lb://ORDER-SERVICE
           predicates:
-            - Path=/api/orders/**, /api/cart/**
-
+            - Path=/api/orders/**, /api/cart/**, /api/dispute/**, /api/coupon/**, /api/payout/**, /api/refund/**
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/v1/mail/**, /api/notification/**
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
           predicates:
@@ -28,37 +33,45 @@ spring:
           uri: lb://LOGISTICS-SERVICE
           predicates:
             - Path=/api/logistics/**
-
         - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
             - Path=/api/chat/**
 
-        - id: chat-static
-          uri: lb://CHAT-SERVICE
+        - id: call-service-websocket
+          uri: lb://CALL-SERVICE
           predicates:
-            - Path=/chat/**
-          filters:
-            - StripPrefix=1
+            - Path=/ws, /ws/**, /api/ws, /api/ws/**
+          metadata:
+            connect-timeout: 30000
+            response-timeout: 30000
 
-        - id: chat-ws
-          uri: lb:ws://CHAT-SERVICE
+        - id: call-service
+          uri: lb://CALL-SERVICE
           predicates:
-            - Path=/ws/**
-        #          filters:
-        #             - StripPrefix=1
-        # WebSocket and HTTP routes for chat service
+            - Path=/api/calls/**, /health
+            -
+#            - id: call-service
+#              uri: lb://CALL-SERVICE
+#              predicates:
+#                - Path=/api/video-calls/**, /ws/video-call/**
 
-        # Other existing services...
+
+
+
+        - id: bot-service
+          uri: lb://BOT-SERVICE
+          predicates:
+            - Path=/api/bot/**
+
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/users/**,/api/auth/**,/api/roles/**
-
+            - Path=/api/users/**,/api/auth/**,/api/roles/**,/api/otp/**
         - id: vendor-service
           uri: lb://VENDOR-SERVICE
           predicates:
-            - Path=/api/council-wards/**,/api/local-governments/**,/api/markets/**,/api/market-sections/**,/api/states/**,/api/statuses/**,/api/shops/**,/api/categories/**,/api/products/**
+            - Path=/api/council-wards/**,/api/local-governments/**,/api/markets/**,/api/market-sections/**,/api/states/**,/api/statuses/**,/api/shops/**,/api/categories/**,/api/products/**, /api/review/**,/api/promotions/**
 
 eureka:
   client:
@@ -72,3 +85,4 @@ eureka:
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
+

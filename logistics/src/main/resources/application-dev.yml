@@ -1,6 +1,6 @@
 spring:
   application:
-    name: logistics-service
+    name: LOGISTICS-SERVICE
   config:
     import: secrets.properties
   servlet:
@@ -17,6 +17,12 @@ spring:
     username: ${DATABASE_USER_DEV}
     password: ${DATABASE_PASSWORD_DEV}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 600000
+      connection-timeout: 10000
   jpa:
     hibernate:
       ddl-auto: update

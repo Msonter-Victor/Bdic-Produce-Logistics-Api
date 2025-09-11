@@ -16,11 +16,9 @@ import java.util.List;
 @Entity
 @Table(name = "logistics_companies")
 public class LogisticsCompany {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String companyName;
     private String companyAddress;
     private String ownerEmail;

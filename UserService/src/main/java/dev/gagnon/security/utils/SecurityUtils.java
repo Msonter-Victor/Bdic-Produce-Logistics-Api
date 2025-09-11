@@ -12,7 +12,12 @@ public class SecurityUtils {
             PUBLIC_ENDPOINTS = List.of(
                 "/api/auth/login",
                 "/api/auth/logout",
-                "/api/users/add-role",
+                "/api/users/getAllBuyersCount",
+                "/api/users/getAllVendorsCount",
+                "api/users/allCount",
+                "/api/users/logisticsAll",
+                "/api/users/**",
+                "/api/auth/**",
                 "/api/users/resend-verification",
                 "/api/users/register",
                 "/api/auth/test-email",

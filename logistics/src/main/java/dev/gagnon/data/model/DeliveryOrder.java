@@ -22,11 +22,14 @@ public class DeliveryOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String orderNumber;
-    private Long userId;
+    private String customerName;
+    @Embedded
     private DeliveryInfo deliveryInfo;
     private BigDecimal totalAmount;
     private BigDecimal deliveryFee;
     private BigDecimal grandTotal;
+    
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
     private LocalDateTime createdAt;
     @OneToOne

@@ -1,5 +1,6 @@
 package dev.gagnon.data.model;
 
+import dev.gagnon.data.constants.RideCurrentStatus;
 import dev.gagnon.data.constants.Type;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,11 @@ public class Vehicle {
     @ManyToOne
     @JoinColumn(name = "company_id")
     private LogisticsCompany company;
-
+    @Enumerated(EnumType.STRING)
+    private RideCurrentStatus status;
+    @ManyToOne
+    @JoinColumn(name = "rider_id")
+    private Rider rider;
+    @Enumerated(EnumType.STRING)
     private Type type;
 }

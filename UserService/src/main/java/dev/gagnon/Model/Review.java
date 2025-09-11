@@ -24,15 +24,15 @@ public class Review {
     private Long id;
     private int rating;
 
-    @ManyToOne
-    @JsonSerialize
-    @JsonDeserialize
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "reviewer_id")
     private User reviewer;
 
-    @ManyToOne
-    @JsonSerialize
-    @JsonDeserialize
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "reviewee_id")
     private User reviewee;
+
+    private Long productId;
 
     private String comment;
     @Setter(AccessLevel.NONE)

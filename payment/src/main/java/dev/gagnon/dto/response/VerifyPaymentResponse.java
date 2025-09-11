@@ -11,32 +11,12 @@ import java.util.List;
 public class VerifyPaymentResponse {
     private String status;
     private String message;
-    private PaymentData data;
-    private Double execTime;
-    private Object[] error;
-    private String errorMessage;
+    private Data data;
 
-    @Data
-    public static class PaymentData {
-        private String businessCode;
-        private String transRef;
-        private String businessRef;
-        private Double debitedAmount;
-        private Double transAmount;
-        private Double transFeeAmount;
-        private Double settlementAmount;
-        private String customerId;
-        private String transactionDate;
-        private Integer channelId;
-        private String currencyCode;
-        private Integer status;
-        private List<Metadata> metadata;
+    @lombok.Data
+    public static class Data {
+        private String reference;
+        private String status;
     }
 
-    @Data
-    public static class Metadata {
-        private String insightTag;
-        private String insightTagValue;
-        private String insightTagDisplay;
-    }
 }

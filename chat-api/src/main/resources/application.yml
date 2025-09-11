@@ -1,0 +1,52 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: CHAT-SERVICE
+  config:
+    import: secrets.properties
+  datasource:
+    url: ${DATABASE_URL_DEV}
+    username: ${DATABASE_USER_DEV}
+    password: ${DATABASE_PASSWORD_DEV}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 600000
+      connection-timeout: 10000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+      chat:
+        options:
+          model: gpt-3.5-turbo
+          temperature: 0.7
+      embedding:
+        options:
+          model: text-embedding-ada-002
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+# External service URLs
+services:
+  vendor-service: http://localhost:8080/api
+
+logging:
+  level:
+    dev.gagnon: DEBUG

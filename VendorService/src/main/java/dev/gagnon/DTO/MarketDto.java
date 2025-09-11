@@ -19,7 +19,7 @@ public class MarketDto {
     private String city;
     private Integer lines;
     //    private Integer shops;
-    private List<Shop> shops;
+    private List<ShopDto> shops;
     private Long councilWardId; // Foreign Key
     private String createdAt;
 }

@@ -1,10 +1,12 @@
 package dev.gagnon.Model;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import dev.gagnon.Model.constants.Role;
+import dev.gagnon.Model.constants.UserStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -42,16 +44,20 @@ public class User {
     private String mediaUrl;
     @Column(nullable = false)
     private String password;
-    private String verificationToken;
-    private LocalDateTime tokenExpiration;
 
-    private LocalDateTime lastVerificationSentAt;
+    @Column(name = "current_token",columnDefinition = "text")
+    private String currentToken;
 
-    private String passwordResetToken;
+    @Enumerated(EnumType.STRING)
+    private UserStatus status = UserStatus.PENDING;
 
-    private LocalDateTime passwordResetExpiration;
-
+    @Setter(AccessLevel.NONE)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime createdAt;
+    @Setter(AccessLevel.NONE)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime updatedAt;
 
     @Transient

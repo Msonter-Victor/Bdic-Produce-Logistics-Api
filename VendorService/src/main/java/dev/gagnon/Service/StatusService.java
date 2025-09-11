@@ -1,12 +1,11 @@
 package dev.gagnon.Service;
 
 import dev.gagnon.DTO.StatusRequestDTO;
-import dev.gagnon.DTO.StatusResponseDTO;
+import dev.gagnon.DTO.response.StatusResponseDTO;
 import dev.gagnon.Model.Status;
 import dev.gagnon.Model.User;
 import dev.gagnon.Repository.StatusRepository;
 import dev.gagnon.Repository.UserRepository;
-import dev.gagnon.Util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -24,14 +23,12 @@ public class StatusService {
     private StatusRepository statusRepository;
 //------------------------------------------------------------------------------------
     public StatusResponseDTO createStatus(StatusRequestDTO dto) {
-        Long currentUserId = SecurityUtil.getCurrentUserId();
 
-        User user = userRepository.findById(currentUserId)
+        User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Status status = Status.builder()
                 .name(dto.getName())
-                .createdBy(user)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -71,8 +68,6 @@ public class StatusService {
         return StatusResponseDTO.builder()
                 .id(status.getId())
                 .name(status.getName())
-                .createdById(status.getCreatedBy().getId())
-                .createdByUsername(status.getCreatedBy().getFirstName())
                 .createdAt(status.getCreatedAt())
                 .build();
     }

@@ -1,6 +1,7 @@
 package dev.gagnon.security.data.models;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -1,8 +1,8 @@
 package dev.gagnon.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.List;
 
 @Entity
 @Table(name = "council_wards")
@@ -11,20 +11,17 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CouncilWard {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(nullable = false)
     private String name;
-
     private String code;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "local_government_id", nullable = false)
+    @JsonIgnore
     private LocalGovernment localGovernment;
-
-    @OneToMany(mappedBy = "councilWard", cascade = CascadeType.ALL)
-    private List<Market> markets;
+    @ManyToOne
+    @JoinColumn(name = "market_id")
+    private Market market;
 }

@@ -17,6 +17,12 @@ spring:
     username: ${DATABASE_USER_DEV}
     password: ${DATABASE_PASSWORD_DEV}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 600000
+      connection-timeout: 10000
   jpa:
     hibernate:
       ddl-auto: update
@@ -41,8 +47,6 @@ eureka:
     service-url:
       #defaultZone: http://41.78.80.108:8761/eureka/
       defaultZone : http://localhost:8761/eureka/
-
-
 
 cloud:
   api:

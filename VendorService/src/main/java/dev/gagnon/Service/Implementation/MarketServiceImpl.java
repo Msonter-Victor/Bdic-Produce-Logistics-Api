@@ -1,14 +1,16 @@
 package dev.gagnon.Service.Implementation;
 
 import dev.gagnon.DTO.MarketDto;
-import dev.gagnon.Model.CouncilWard;
-import dev.gagnon.Model.Market;
-import dev.gagnon.Repository.CouncilWardRepository;
-import dev.gagnon.Repository.MarketRepository;
+import dev.gagnon.DTO.ShopDto;
+import dev.gagnon.DTO.request.AddMarketRequest;
+import dev.gagnon.DTO.request.UpdateMarketRequest;
+import dev.gagnon.DTO.response.MarketResponse;
+import dev.gagnon.Model.*;
+import dev.gagnon.Model.constants.MarketStatus;
+import dev.gagnon.Repository.*;
 import dev.gagnon.Service.MarketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,33 +19,41 @@ import java.util.stream.Collectors;
 public class MarketServiceImpl implements MarketService {
     private final MarketRepository marketRepository;
     private final CouncilWardRepository councilWardRepository;
+    private final ShopRepository shopRepository;
+    private final LocalGovernmentRepository localGovernmentRepository;
+    private final MarketSectionRepository marketSectionRepository;
+    private final ProductRepository productRepository;
 
     @Override
-    public MarketDto createMarket(MarketDto dto) {
-        CouncilWard councilWard = councilWardRepository.findById(dto.getCouncilWardId())
+    public MarketResponse createMarket(AddMarketRequest request) {
+        CouncilWard councilWard = councilWardRepository.findById(request.getCouncilId())
                 .orElseThrow(() -> new RuntimeException("Council Ward not found"));
+        LocalGovernment localGovernment = localGovernmentRepository.findById(request.getLocalGovernmentId())
+                .orElseThrow(() -> new RuntimeException("Local Government not found"));
         Market market = Market.builder()
-                .name(dto.getName())
-                .address(dto.getAddress())
-                .city(dto.getCity())
-                .lines(dto.getLines())
-                .shops(dto.getShops())
-                .councilWard(councilWard)
+                .name(request.getMarketName())
+                .address(request.getLocation())
+                .status(MarketStatus.ACTIVE)
+                .city(localGovernment.getName())
+                .lines(Math.toIntExact(request.getLines()))
                 .build();
-
         Market saved = marketRepository.save(market);
+        councilWard.setMarket(saved);
+        councilWardRepository.save(councilWard);
         return mapToDto(saved);
     }
 
+
+
     @Override
-    public MarketDto getMarketById(Long id) {
+    public MarketResponse getMarketById(Long id) {
         return marketRepository.findById(id)
                 .map(this::mapToDto)
                 .orElseThrow(() -> new RuntimeException("Market not found"));
     }
 
     @Override
-    public List<MarketDto> getAllMarkets() {
+    public List<MarketResponse> getAllMarkets() {
         return marketRepository.findAll()
                 .stream()
                 .map(this::mapToDto)
@@ -51,39 +61,98 @@ public class MarketServiceImpl implements MarketService {
     }
 
     @Override
-    public MarketDto updateMarket(Long id, MarketDto dto) {
+    public MarketResponse updateMarket(Long id, UpdateMarketRequest dto) {
         Market market = marketRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Market not found"));
-
-        CouncilWard councilWard = councilWardRepository.findById(dto.getCouncilWardId())
-                .orElseThrow(() -> new RuntimeException("Council Ward not found"));
-
         market.setName(dto.getName());
-        market.setAddress(dto.getAddress());
-        market.setCity(dto.getCity());
-        market.setLines(dto.getLines());
-        market.setShops(dto.getShops());
-        market.setCouncilWard(councilWard);
-
         Market updated = marketRepository.save(market);
         return mapToDto(updated);
     }
 
     @Override
     public void deleteMarket(Long id) {
-        marketRepository.deleteById(id);
+        Market market = marketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Market not found"));
+        // Delete all related sections first
+        List<MarketSection>sections =  marketSectionRepository.findAlByMarket(id);
+        CouncilWard ward = councilWardRepository.findByMarket(id);
+        List<Shop> shops = sections.stream().map(section -> section.getShop()).toList();
+        List<List<Product>> list = shops.stream()
+                .map(shop -> productRepository.findAllByShop(shop.getId())).toList();
+        list.forEach(productRepository::deleteAllInBatch);
+        shopRepository.deleteAll(shops);
+        councilWardRepository.delete(ward);
+        marketSectionRepository.deleteAllInBatch(sections);
+        marketRepository.delete(market);
     }
 
-    private MarketDto mapToDto(Market market) {
-        return MarketDto.builder()
+    @Override
+    public List<Market> saveAll() {
+        List<Market> markets = marketRepository.findAll();
+        marketRepository.saveAll(markets);
+        return markets;
+    }
+
+    @Override
+    public String deActivateMarket(Long id) {
+        Market market = marketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Market not found"));
+        market.setStatus(MarketStatus.INACTIVE);
+        marketRepository.save(market);
+        return "market deactivated";
+    }
+
+    @Override
+    public Long getActiveMarkets() {
+        List<Market> getMarkets = marketRepository.findAll();
+        return getMarkets.stream()
+                .filter(market -> market.getStatus()==MarketStatus.ACTIVE)
+                .count();
+    }
+
+    @Override
+    public String activateMarket(Long id) {
+        Market market = marketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Market not found"));
+        market.setStatus(MarketStatus.ACTIVE);
+        marketRepository.save(market);
+        return "market activated";
+    }
+
+    private MarketResponse mapToDto(Market market) {
+        List<Shop> shops = shopRepository.findAllByMarketId(market.getId());
+        List<ShopDto> shopDtos = shops.stream()
+                .map(this::mapShopResponse)
+                .toList();
+        List<MarketSection> sections = marketSectionRepository.findAlByMarket(market.getId());
+        Integer lines = sections.size();
+        return MarketResponse.builder()
+                .id(market.getId())
+                .status(String.valueOf(market.getStatus()))
                 .name(market.getName())
                 .address(market.getAddress())
                 .city(market.getCity())
-                .lines(market.getLines())
-                .shops(market.getShops())
-                .councilWardId(
-                        market.getCouncilWard() != null ? market.getCouncilWard().getId() : null
-                )
+                .lines(lines)
+                .shops(shopDtos)
+                .numberOfShops(shops.size())
                 .build();
+    }
+
+    private ShopDto mapShopResponse(Shop shop) {
+        ShopDto shopDto = new ShopDto();
+        shopDto.setId(shop.getId());
+        shopDto.setName(shop.getName());
+        shopDto.setAddress(shop.getAddress());
+        shopDto.setMarketId(shop.getMarket().getId());
+        shopDto.setShopNumber(shop.getShopNumber());
+        shopDto.setMarketId(shop.getMarket().getId());
+        shopDto.setBankName(shop.getBankName());
+        shopDto.setAccountNumber(shop.getAccountNumber());
+        shopDto.setNin(shop.getNin());
+        shopDto.setPhone(shop.getPhone());
+        shopDto.setCacNumber(shop.getCacNumber());
+        shopDto.setStreetName(shop.getStreetName());
+        shopDto.setTaxIdNumber(shopDto.getTaxIdNumber());
+        return shopDto;
     }
 }

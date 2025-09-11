@@ -1,5 +1,7 @@
 package dev.gagnon.data.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import dev.gagnon.dto.response.DeliveryInfo;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,17 +25,16 @@ public class Order {
     private Long id;
     private String orderNumber;
     private String customerName;
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderItem> items = new ArrayList<>();
-    private String deliveryAddress;
-    private String deliveryMethod;
+    @OneToMany(cascade={CascadeType.ALL}, orphanRemoval=true, fetch=FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    @JsonIgnore
+    private List<OrderItem> items = new ArrayList();
+    @Embedded
+    private DeliveryInfo deliveryInfo;
     private BigDecimal deliveryFee = BigDecimal.ZERO;
     private BigDecimal grandTotal;
-    @ManyToOne
-    @JoinColumn(name = "rider_id")
-    private Rider rider;
-    private String status;
-    
+    private BigDecimal totalAmount;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
     

@@ -1,15 +1,28 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  dev.gagnon.model.DeliveryInfo
+ *  jakarta.persistence.Embeddable
+ *  lombok.Generated
+ */
 package dev.gagnon.model;
 
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Embeddable
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
 public class DeliveryInfo {
-    private String method; // "pickup" or "delivery"
+    private String method;
     private String address;
+    private String contactPhone;
 }
+

@@ -11,6 +11,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handlePaymentException(PaymentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<String> handlePaymentException(BusinessException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
     
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex) {

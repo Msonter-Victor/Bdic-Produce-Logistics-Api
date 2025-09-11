@@ -4,11 +4,11 @@ import lombok.Builder;
 import lombok.Data;
 
 @Data
-@Builder
 public class ShopDto {
     private Long id;
     private String name;
     private String address;
+    private String phone;
 
     private String shopNumber;
     private String homeAddress;
@@ -20,7 +20,7 @@ public class ShopDto {
     private String accountNumber;
 
     private Long marketId;
-    private Long marketSectionId;
-    private Long userId;
-    private Long statusId;
+    private String marketSectionId;
+    private String email;
+    private String code;
 }

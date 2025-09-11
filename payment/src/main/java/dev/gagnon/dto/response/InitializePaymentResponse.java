@@ -18,7 +18,7 @@ public class InitializePaymentResponse {
     public static class PaymentData {
         private String authorizationUrl;
         private String reference;
-        private String credoReference;
+        private String accessCode;
     }
 }
 

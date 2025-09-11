@@ -1,5 +1,6 @@
 package dev.gagnon.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,7 @@ public class LocalGovernment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "state_id", nullable = false)
+    @JsonIgnore
     private State state;
 
     @Column(nullable = false)

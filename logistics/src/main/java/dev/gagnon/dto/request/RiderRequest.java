@@ -14,4 +14,5 @@ public class RiderRequest {
     private String riderFirstName;
     private String riderLastName;
     private String riderEmail;
+    private String phone;
 }

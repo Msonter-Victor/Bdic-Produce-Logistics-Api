@@ -2,6 +2,7 @@ package dev.gagnon.dto.response;
 
 public enum OrderStatus {
     PENDING,
+    ACCEPTED,
     IN_TRANSIT,
     PICKED_UP,
     PROCESSING,

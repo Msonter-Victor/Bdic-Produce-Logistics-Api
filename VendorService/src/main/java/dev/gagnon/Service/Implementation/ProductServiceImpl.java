@@ -2,30 +2,27 @@ package dev.gagnon.Service.Implementation;
 
 import com.cloudinary.Cloudinary;
 import dev.gagnon.DTO.*;
+import dev.gagnon.DTO.request.AddProductRequest;
+import dev.gagnon.DTO.response.*;
 import dev.gagnon.Exception.BusinessException;
 import dev.gagnon.Exception.ResourceNotFoundException;
-import dev.gagnon.Model.Category;
-import dev.gagnon.Model.Product;
-import dev.gagnon.Model.Shop;
-import dev.gagnon.Repository.CategoryRepository;
-import dev.gagnon.Repository.ProductRepository;
-import dev.gagnon.Repository.ProductSpecifications;
-import dev.gagnon.Repository.ShopRepository;
+import dev.gagnon.Model.*;
+import dev.gagnon.Model.constants.FeaturedStatus;
+import dev.gagnon.Model.constants.MarketStatus;
+import dev.gagnon.Repository.*;
 import dev.gagnon.Service.ProductService;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static dev.gagnon.Model.constants.MarketStatus.ACTIVE;
+import static dev.gagnon.Model.constants.ShopStatus.VERIFIED;
 import static dev.gagnon.Util.ServiceUtils.getMediaUrl;
 
 @Service
@@ -35,65 +32,73 @@ public class ProductServiceImpl implements ProductService {
     private final ShopRepository shopRepo;
     private final CategoryRepository categoryRepo;
     private final Cloudinary cloudinary;
-// Inject from properties file
-// @Value("${upload.dir}")
-// private String uploadDir;
-    private final String UPLOAD_DIR = Paths.get(System.getProperty("user.dir"), "//uploads//").toString();
+    private final SubCategoryRepository subCategoryRepo;
+    private final ReviewRepository reviewRepo;
+    private final MarketRepository marketRepository;
 
     @Override
-    public ApiResponse<ProductDto> createProduct(ProductDto dto,
-                                                 MultipartFile mainImage,
-                                                 MultipartFile sideImage1,
-                                                 MultipartFile sideImage2,
-                                                 MultipartFile sideImage3,
-                                                 MultipartFile sideImage4) {
-
-        Shop shop = shopRepo.findById(dto.getShopId()).orElse(null);
-        Category category = categoryRepo.findById(dto.getCategoryId()).orElse(null);
-        if (shop == null || category == null) {
-            return new ApiResponse<>(false, "Invalid shop or category", null);
+    public AddProductResponse createProduct(AddProductRequest request) {
+        Shop shop = shopRepo.findById(request.getShopId()).orElse(null);
+        Category category = categoryRepo.findById(request.getCategoryId()).orElse(null);
+        SubCategory subCategory = subCategoryRepo.findById(request.getSubCategoryId()).orElse(null);
+        if (shop == null || category == null || subCategory == null) {
+            throw new ResourceNotFoundException("Shop or Category or sub category not found");
         }
         // Upload images and get URLs
-        String mainImageUrl = getMediaUrl(mainImage, cloudinary.uploader());
-        String sideImage1Url = getMediaUrl(sideImage1, cloudinary.uploader());
-        String sideImage2Url = getMediaUrl(sideImage2, cloudinary.uploader());
-        String sideImage3Url = getMediaUrl(sideImage3, cloudinary.uploader());
-        String sideImage4Url = getMediaUrl(sideImage4, cloudinary.uploader());
-
+        String mainImageUrl = getMediaUrl(request.getMainImageUrl(), cloudinary.uploader());
+        String sideImage1Url = getMediaUrl(request.getSideImage1Url(), cloudinary.uploader());
+        String sideImage2Url = getMediaUrl(request.getSideImage2Url(), cloudinary.uploader());
+        String sideImage3Url = getMediaUrl(request.getSideImage3Url(), cloudinary.uploader());
+        String sideImage4Url = getMediaUrl(request.getSideImage4Url(), cloudinary.uploader());
         Product product = Product.builder()
-                .name(dto.getName())
-                .price(dto.getPrice())
-                .description(dto.getDescription())
-                .quantity(dto.getQuantity())
+                .name(request.getName())
+                .price(request.getPrice())
+                .salesPrice(request.getPrice())
+                .category(category)
+                .subCategory(subCategory)
+                .description(request.getDescription())
+                .quantity(request.getQuantity())
                 .mainImageUrl(mainImageUrl)
                 .sideImage1Url(sideImage1Url)
                 .sideImage2Url(sideImage2Url)
                 .sideImage3Url(sideImage3Url)
                 .sideImage4Url(sideImage4Url)
+                .quantitySold(0L)
+                .featuredStatus(FeaturedStatus.NOT_FEATURED)
+                .isFloated(false)
+                .isPromoted(false)
                 .shop(shop)
-                .category(category)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-
-        Product saved = productRepo.save(product);
-
-        ProductDto responseDto = mapToDto(saved);
-        return new ApiResponse<>(true, "Product created successfully", responseDto);
-    }
-
-
-    @Override
-    public ProductResponseDto getProductById(Long id) {
-        Product product = productRepo.findById(id).orElseThrow(()->new ResourceNotFoundException("product not found"));
-        return mapToDto4SingleProduct(product);
+        productRepo.save(product);
+        AddProductResponse response = new AddProductResponse();
+        response.setId(product.getId());
+        response.setMessage("Added product successfully");
+        return response;
     }
 
     @Override
-    public ApiResponse2<List<ProductResponseDto>> getAllProducts() {
-        List<ProductResponseDto> list = productRepo.findAll()
+    public ProductResponse getProductById(Long id) {
+        Product product = productRepo.findByIdAndActiveShop(id,VERIFIED,ACTIVE,ACTIVE).orElseThrow(()->new ResourceNotFoundException("product not found"));
+
+        ProductResponse response = new ProductResponse(product);
+        List<Review> reviews = reviewRepo.findByProductId(id);
+        List<ReviewResponse> reviewResponses = reviews.stream()
+                .map(ReviewResponse::new)
+                .toList();
+        response.setReviews(reviewResponses);
+        return response;
+    }
+
+    @Override
+    public ApiResponse2<List<ProductResponse>> getAllProducts() {
+        List<ProductResponse> list = productRepo.findAllFromVerifiedVendors(VERIFIED, ACTIVE, ACTIVE)
                 .stream()
-                .map(this::mapToDto4SingleProduct)
+                .filter(product ->
+                        product.getQuantity() - product.getQuantitySold()>=1
+                )
+                .map(ProductResponse::new)
                 .collect(Collectors.toList());
         return new ApiResponse2<>(true, "Fetched all products", list);
     }
@@ -105,8 +110,6 @@ public class ProductServiceImpl implements ProductService {
             product.setDescription(dto.getDescription());
             product.setPrice(dto.getPrice());
             product.setQuantity(dto.getQuantity());
-            product.setUpdatedAt(LocalDateTime.now());
-
             productRepo.save(product);
             return new ApiResponse<>(true, "Product updated", mapToDto(product));
         }).orElse(new ApiResponse<>(false, "Product not found", null));
@@ -116,6 +119,8 @@ public class ProductServiceImpl implements ProductService {
         if (!productRepo.existsById(id)) {
             return new ApiResponse<>(false, "Product not found", null);
         }
+        List<Review> reviews = reviewRepo.findByProductId(id);
+        reviewRepo.deleteAll(reviews);
         productRepo.deleteById(id);
         return new ApiResponse<>(true, "Product deleted", null);
     }
@@ -123,8 +128,8 @@ public class ProductServiceImpl implements ProductService {
     public boolean checkProductAvailability(Long productId, Integer requestedQuantity) {
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
-        return product.getQuantity() >= requestedQuantity;
+        long availableNumber = product.getQuantity() - product.getQuantitySold();
+        return availableNumber >= requestedQuantity;
     }
 
     public ApiResponse<Void> updateProductStock(Long productId, Integer quantityChange) {
@@ -132,14 +137,11 @@ public class ProductServiceImpl implements ProductService {
             Product product = productRepo.findById(productId)
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-            int newQuantity = product.getQuantity() + quantityChange;
-            if (newQuantity < 0) {
+            if (product.getQuantity()-product.getQuantitySold() <= 0) {
                 throw new ResourceNotFoundException("Insufficient stock available");
             }
-
-            product.setQuantity(newQuantity);
+            product.setQuantitySold(product.getQuantitySold() + quantityChange);
             productRepo.save(product);
-
             return new ApiResponse<>(true, "Stock updated successfully", null);
         } catch (ResourceNotFoundException e) {
             return new ApiResponse<>(false, e.getMessage(), null);
@@ -151,13 +153,11 @@ public class ProductServiceImpl implements ProductService {
             if (newQuantity < 0) {
                 throw new BusinessException("Quantity cannot be negative");
             }
-
             Product product = productRepo.findById(productId)
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-            product.setQuantity(newQuantity);
+            product.setQuantitySold(product.getQuantitySold() + newQuantity);
             productRepo.save(product);
-
             return new ApiResponse<>(true, "Quantity updated successfully", null);
         } catch (ResourceNotFoundException | BusinessException e) {
             return new ApiResponse<>(false, e.getMessage(), null);
@@ -170,28 +170,6 @@ public class ProductServiceImpl implements ProductService {
         return "successfully deleted products";
     }
 
-     private String saveImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) return null;
-        try {
-            File dir = new File(UPLOAD_DIR);
-            if (!dir.exists()) dir.mkdirs();
-            // Sanitize the original filename by replacing spaces with underscores
-            String originalFilename = file.getOriginalFilename().replaceAll("\\s+", "_");
-            String uniqueFilename = UUID.randomUUID() + "_" + originalFilename;
-            File destFile = new File(dir, uniqueFilename);
-            file.transferTo(destFile);
-
-            // Return the relative path (for front-end use)
-            return "/uploads/" + uniqueFilename;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-
-
     private ProductDto mapToDto(Product product) {
         ProductDto dto = new ProductDto();
         dto.setId(product.getId());
@@ -202,58 +180,260 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
-   //String BASE_URL = "C:/Users/BDIC/IdeaProjects/Bdic-Produce-Logistics-Api";
+    @Override
+    public List<ProductResponseDto> getAllUserProducts(String email) {
+        List<Product> products =  productRepo.findByUserEmail(email);
+        if (products.isEmpty()) return List.of();
+        return products.stream()
+                .map(this::mapToDto4SingleProduct)
+                .toList();
+    }
 
-   @Override
-   public ApiResponse2<List<ProductSearchResponseDTO>> searchProducts(ProductSearchRequest request) {
-       Specification<Product> spec = ProductSpecifications.matchesSearchRequest(request);
-       List<ProductSearchResponseDTO> results = productRepo.findAll(spec).stream()
-               .map(product -> ProductSearchResponseDTO.builder()
-                       .id(product.getId())
-                       .name(product.getName())
-                       .description(product.getDescription())
-                       .price(product.getPrice())
-                       .quantity(product.getQuantity())
-                       .mainImageUrl(product.getMainImageUrl())
-                       .sideImage1Url(product.getSideImage1Url())
-                       .sideImage2Url(product.getSideImage2Url())
-                       .sideImage3Url(product.getSideImage3Url())
-                       .sideImage4Url(product.getSideImage4Url())
-                       .shopId(product.getShop() != null ? product.getShop().getId() : null)
-                       .shopName(product.getShop() != null ? product.getShop().getName() : null)
-                       .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                       .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
-                       .marketName(
-                               (product.getShop() != null &&
-                                       product.getShop().getMarketSection() != null &&
-                                       product.getShop().getMarketSection().getMarket() != null)
-                                       ? product.getShop().getMarketSection().getMarket().getName()
-                                       : null)
-                       .vendor(product.getShop() != null && product.getShop().getUser() != null
-                               ? product.getShop().getUser().getSurname() + " " + product.getShop().getUser().getOtherName()
-                               : null)
-                       .market_section(product.getShop() != null && product.getShop().getMarketSection() != null
-                               ? product.getShop().getMarketSection().getName()
-                               : null)
-                       .shop_address(product.getShop() != null ? product.getShop().getAddress() : null)
-                       .status(product.getShop() != null && product.getShop().getStatus() != null
-                               ? product.getShop().getStatus().getName()
-                               : null)
-                       .build())
-               .collect(Collectors.toList());
+    @Override
+    public List<ProductResponseDto> getAllProductsByCategory(Long categoryId) {
+        List<Product> products = productRepo.findByCategory(categoryId,VERIFIED,ACTIVE,ACTIVE);
+        if (products.isEmpty()) return List.of();
+        return products.stream()
+                .map(this::mapToDto4SingleProduct)
+                .toList();
+    }
 
-       return new ApiResponse2<>(true, "Search results found", results);
-   }
+    @Override
+    public Long getAllUserProductsCount(String email) {
+        List<Product> products =  productRepo.findByUserEmail(email);
+        return (long) products.size();
+    }
+
+    @Override
+    public Optional<ProductResponseDto> getBestSellingProduct(Long shopId) {
+        List<Product> products = productRepo.findAllByShop(shopId);
+        List<Product> soldProduct = products.stream()
+                .filter(product -> product.getQuantitySold() > 0)
+                .toList();
+        return soldProduct.stream()
+                .max(Comparator.comparingLong(Product::getQuantitySold))
+                .map(this::mapToDto4SingleProduct);
+    }
+
+    @Override
+    public List<ProductResponseDto> search(String keyword) {
+        List<Product> products = productRepo.searchAllBy(keyword,VERIFIED,ACTIVE,ACTIVE);
+        if(products.isEmpty())return List.of();
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1
+                )
+                .toList();
+        return filtered.stream()
+                .map(this::mapToDto4SingleProduct)
+                .toList();
+    }
+
+
+    @Override
+    public List<ProductResponseDto> searchByCategory(String categoryName) {
+        List<Product> products = productRepo.searchAllByCategory(categoryName,ACTIVE,ACTIVE,VERIFIED);
+        if(products.isEmpty())return List.of();
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1
+                        )
+                .toList();
+        return filtered.stream()
+                .map(this::mapToDto4SingleProduct)
+                .toList();
+    }
+
+    @Override
+    public Long getTotalStockCount(Long shopId) {
+        List<Product> products = productRepo.findAllByShop(shopId);
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1)
+                .toList();
+        return filtered.stream()
+                .mapToLong(product -> product.getQuantity() - product.getQuantitySold()).sum();
+    }
+
+    @Override
+    public List<ProductResponseDto> getAllByMarket(Long marketId) {
+        List<Product>products = productRepo.findByMarket(marketId);
+        return getProductResponseDtos(products);
+    }
+
+    @NotNull
+    private List<ProductResponseDto> getProductResponseDtos(List<Product> products) {
+        if (products.isEmpty())return List.of();
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1
+                && product.getShop().getStatus()==VERIFIED)
+                .toList();
+        return  filtered.stream()
+                .map(this::mapToDto4SingleProduct)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponseDto> getAllProductsBySubCategory(Long subCategoryId) {
+        List<Product> products = productRepo.findBySubCategory(subCategoryId,ACTIVE,ACTIVE,VERIFIED);
+        return getProductResponseDtos(products);
+    }
+
+    @Override
+    public List<ProductResponseDto> getAllProductsBySubCategoryName(String request) {
+        List<Product> products = productRepo.findBySubCategoryName(request,ACTIVE,ACTIVE,VERIFIED);
+        return getProductResponseDtos(products);
+    }
+
+    @Override
+    public String featureProduct(Long productId) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        if(product.getFeaturedStatus()==FeaturedStatus.FEATURED)
+            throw new BusinessException("Product already featured");
+        product.setFeaturedStatus(FeaturedStatus.FEATURED);
+        Shop shop = product.getShop();
+        if(Objects.equals(shop.getFeaturedNumber(), shop.getShopTier().getFeaturedNumber()))
+            throw new BusinessException("Exhausted featured products, consider upgrading");
+        shop.setFeaturedNumber(shop.getFeaturedNumber() + 1);
+        product.setFeaturedAt(LocalDateTime.now());
+        productRepo.save(product);
+        return "Product successfully featured";
+    }
+
+    @Override
+    public List<ProductResponse> getAllFeaturedProducts() {
+        List<Product>products = productRepo.findAllByFeatured(FeaturedStatus.FEATURED);
+        if(products.isEmpty())return List.of();
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1)
+                .toList();
+        return filtered.stream()
+                .map(ProductResponse::new)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponse> getShopFeaturedProducts(Long shopId) {
+        List<Product>products = productRepo.findAllByFeaturedAndShop(FeaturedStatus.FEATURED,shopId,VERIFIED);
+        if(products.isEmpty())return List.of();
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1)
+                .toList();
+        return filtered.stream()
+                .map(ProductResponse::new)
+                .toList();
+    }
+
+    @Override
+    public String updatePrice(Long productId, Double price) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        product.setSalesPrice(BigDecimal.valueOf(price));
+        productRepo.save(product);
+        return "Product successfully updated";
+    }
+
+
+    @Override
+    public ApiResponse<Void> updateProductTotalStock(Long id, Integer quantity) {
+        try {
+            Product product = productRepo.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+            product.setQuantity(product.getQuantity() + quantity);
+            productRepo.save(product);
+            return new ApiResponse<>(true, "Quantity updated successfully", null);
+        } catch (ResourceNotFoundException | BusinessException e) {
+            return new ApiResponse<>(false, e.getMessage(), null);
+        }
+    }
+
+    @Override
+    public String promote(Long productId) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        if(product.isPromoted())
+            throw new BusinessException("product already promoted");
+        Shop shop = product.getShop();
+        if(Objects.equals(shop.getPromotedNumber(), shop.getShopTier().getPromotedNumber()))
+            throw new BusinessException("Exhausted promoted products, consider upgrading");
+        product.setPromoted(true);
+        shop.setPromotedNumber(shop.getPromotedNumber() + 1);
+        shopRepo.save(shop);
+        product.setPromotedAt(LocalDateTime.now());
+        productRepo.save(product);
+        return "product promoted";
+    }
+
+    @Override
+    public String floatProduct(Long productId) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        if(product.isFloated())
+            throw new BusinessException("product already floated");
+        Shop shop = product.getShop();
+        if(Objects.equals(shop.getFloatedNumber(), shop.getShopTier().getFloatedNumber()))
+            throw new BusinessException("Exhausted floated products, consider upgrading");
+        product.setFloated(true);
+        shop.setFloatedNumber(shop.getFloatedNumber() + 1);
+        shopRepo.save(shop);
+        product.setFloatedAt(LocalDateTime.now());
+        productRepo.save(product);
+        return "product floated";
+    }
+
+    @Override
+    public List<ProductResponse> getAllFloatedProducts() {
+        List<Product>products = productRepo.findAllByFloated(true);
+        if(products.isEmpty())return List.of();
+        List<Product>filtered = products.stream()
+                .filter(product -> product.getQuantity()-product.getQuantitySold()>=1)
+                .toList();
+        return filtered.stream()
+                .map(ProductResponse::new)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponse> getAllPromotedProducts() {
+        List<Product>products = productRepo.findAllByPromoted(true);
+        if(products.isEmpty())return List.of();
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1)
+                .toList();
+        return filtered.stream()
+                .map(ProductResponse::new)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponse> getAllShopProducts(Long shopId) {
+        List<Product>products = productRepo.findAllByShop(shopId);
+        if(products.isEmpty())return List.of();
+        return products.stream()
+                .map(ProductResponse::new)
+                .toList();
+    }
+
+
+
+
+
+    @Override
+    public Long getAllProductsByCategoryCount(Long categoryId) {
+        List<Product> products = productRepo.findByCategory(categoryId,VERIFIED,ACTIVE,ACTIVE);
+        List<Product>filtered = products.stream()
+                .filter(product->product.getQuantity()-product.getQuantitySold()>=1)
+                .toList();
+        return (long) filtered.size();
+    }
 
     private ProductResponseDto mapToDto4SingleProduct(Product product) {
         ProductResponseDto dto = new ProductResponseDto();
-
         dto.setId(product.getId());
         dto.setName(product.getName());
-        dto.setPrice(BigDecimal.valueOf(product.getPrice()));
+        dto.setPrice(product.getPrice());
         dto.setDescription(product.getDescription());
         dto.setQuantity(product.getQuantity());
-
+        dto.setQuantitySold(product.getQuantitySold());
         // Set image URLs
         dto.setMainImageUrl(product.getMainImageUrl());
         dto.setSideImage1Url(product.getSideImage1Url());
@@ -265,15 +445,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setShopId(product.getShop().getId());
         dto.setShopName(product.getShop().getName());
 
-        // Set category info
-        dto.setCategoryId(product.getCategory().getId());
-        dto.setCategoryName(product.getCategory().getName());
-
         return dto;
 
-
     }
-
-
-
 }

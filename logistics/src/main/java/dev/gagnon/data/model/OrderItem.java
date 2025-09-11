@@ -24,6 +24,10 @@ public class OrderItem {
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal totalPrice;
+    
+    @Column(name = "order_id")
+    private Long orderId;
+    
     @ManyToOne
     @JoinColumn(name = "delivery_order_id")
     private DeliveryOrder deliveryOrder;

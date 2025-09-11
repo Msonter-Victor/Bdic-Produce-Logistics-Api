@@ -1,17 +1,22 @@
 package dev.gagnon.Model;
 
-//public class User {
-//}
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import dev.gagnon.Model.constants.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.FetchType.EAGER;
 
 @Entity
 @Table(name = "users")
@@ -27,43 +32,36 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
     private String firstName;
-
     private String lastName;
-
-
+    @ElementCollection(fetch=EAGER)
+    @Enumerated(STRING)
+    private Set<Role> roles;
+    private boolean isVerified;
+    @OneToMany(fetch = EAGER, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Review> reviews;
     private String phone;
-
     private String nin;
-
     private String mediaUrl;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
     @Column(nullable = false)
     private String password;
-    @Column(name = "is_verified", nullable = false)
-    private boolean isVerified = false;
-    @Column(name = "verification_token", unique = true)
     private String verificationToken;
-    @Column(name = "token_expiration")
     private LocalDateTime tokenExpiration;
 
-    @Column(name = "last_verification_sent_at")
     private LocalDateTime lastVerificationSentAt;
 
-    @Column(name = "password_reset_token")
     private String passwordResetToken;
 
-    @Column(name = "password_reset_expiration")
     private LocalDateTime passwordResetExpiration;
-
+    @Setter(AccessLevel.NONE)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime createdAt;
+    @Setter(AccessLevel.NONE)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime updatedAt;
 
     @Transient

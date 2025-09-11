@@ -17,6 +17,12 @@ spring:
     username: ${DATABASE_USER_DEV}
     password: ${DATABASE_PASSWORD_DEV}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 600000
+      connection-timeout: 10000
   jpa:
     hibernate:
       ddl-auto: update
@@ -41,3 +47,9 @@ services:
 server:
   port: 8986
   address: 0.0.0.0
+
+cloud:
+  api:
+    name: ${CLOUD_API_NAME}
+    secret: ${CLOUD_API_SECRET}
+    key: ${CLOUD_API_KEY}

@@ -14,13 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeliveryInfo {
-    @Enumerated(EnumType.STRING)
-    private DeliveryMethod method;
-    
+    private String method;
     private String address;
     private String contactPhone;
-    
-    // For shop pickup
-    private String shopLocation;
-    private LocalDateTime pickupTime;
 }

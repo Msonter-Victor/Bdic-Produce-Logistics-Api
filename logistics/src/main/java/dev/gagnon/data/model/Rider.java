@@ -19,9 +19,9 @@ public class Rider {
     private String firstName;
     private String lastName;
     private String email;
-    private String password;
+    private String phone;
     @ManyToOne
-    @JoinColumn(name = "vehicle_id")
-    private Vehicle vehicle;
+    @JoinColumn(name = "company_id")
+    private LogisticsCompany company;
 
 }

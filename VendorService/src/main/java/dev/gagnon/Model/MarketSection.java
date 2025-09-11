@@ -1,6 +1,11 @@
 package dev.gagnon.Model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import dev.gagnon.Model.constants.MarketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,20 +26,34 @@ public class MarketSection {
 
     @ManyToOne
     @JoinColumn(name = "market_id", nullable = false)
-    private Market market;
-
-    private String name;
-    private String description;
-
-
-    @OneToMany(mappedBy = "marketSection", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Shop> shops = new ArrayList<>();
+    private Market market;
+    private String name;
+    @ManyToOne
+    @JoinColumn(name = "shop_id")
+    @JsonIgnore
+    private Shop shop;
+    private MarketStatus status = MarketStatus.ACTIVE;
 
 
     @Column(name = "created_at")
+    @Setter(AccessLevel.NONE)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @Setter(AccessLevel.NONE)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

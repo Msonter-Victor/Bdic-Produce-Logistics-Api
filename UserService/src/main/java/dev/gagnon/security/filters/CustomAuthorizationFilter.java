@@ -6,6 +6,9 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
+import dev.gagnon.Model.User;
+import dev.gagnon.Repository.UserRepository;
+import dev.gagnon.Repository.UserSessionRepository;
 import dev.gagnon.security.config.RsaKeyProperties;
 import dev.gagnon.security.services.AuthService;
 import jakarta.servlet.FilterChain;
@@ -13,12 +16,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -36,11 +41,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private final RsaKeyProperties rsaKeys;
     private final AuthService authService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         log.info("Starting authorization");
         String requestPath = request.getRequestURI();
         boolean isRequestPathPublic = PUBLIC_ENDPOINTS.contains(requestPath);
@@ -61,7 +67,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private boolean isTokenBlacklisted(HttpServletResponse response, String token) throws IOException {
         if (authService.isTokenBlacklisted(token)) {
             log.warn("Token is blacklisted: {}", token);
-            sendErrorResponse(response);
+            sendErrorResponse(response,"expired token");
             return true;
         }
         return false;
@@ -81,13 +87,22 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
             decodedJWT = jwtVerifier.verify(token);
         } catch (JWTVerificationException exception) {
             log.error("JWT verification failed: {}", exception.getMessage());
-            sendErrorResponse(response);
+            sendErrorResponse(response,"Expired or invalid token");
             return false;
         }
+
 
         List<? extends GrantedAuthority> authorities = decodedJWT.getClaim("roles")
                 .asList(SimpleGrantedAuthority.class);
         String principal = decodedJWT.getClaim("principal").asString();
+        User user = userRepository.findByEmail(principal)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if (!token.equals(user.getCurrentToken())) {
+            log.warn("Token is not the current active token for user: {}", principal);
+            sendErrorResponse(response, "Session expired - logged in from another device");
+            return false;
+        }
         String credentials = decodedJWT.getClaim("credentials").asString();
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, credentials, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -95,10 +110,10 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
         return true;
     }
 
-    private void sendErrorResponse(HttpServletResponse response) throws IOException {
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(APPLICATION_JSON_VALUE);
-        response.getWriter().write("{\"error\": \"" + "Token is expired or invalid" + "\"}");
+        response.getWriter().write("{\"error\": \"" + message + "\"}");
         response.getWriter().flush();
     }
 }
